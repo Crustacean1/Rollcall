@@ -7,7 +7,7 @@ using Rollcall.Repositories;
 
 #nullable disable
 
-namespace attendance.Migrations
+namespace rollcall.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
     partial class RepositoryContextModelSnapshot : ModelSnapshot
@@ -25,7 +25,7 @@ namespace attendance.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("date");
 
                     b.Property<int>("Meals")
                         .HasColumnType("int");
@@ -67,6 +67,7 @@ namespace attendance.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -76,22 +77,16 @@ namespace attendance.Migrations
 
             modelBuilder.Entity("Rollcall.Models.Mask", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("int");
+                        .HasColumnType("date");
 
                     b.Property<int>("Meals")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
+                    b.HasKey("GroupId", "Date");
 
                     b.ToTable("Masks");
                 });
@@ -103,11 +98,29 @@ namespace attendance.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
                     b.ToTable("MealSchemas");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "breakfast"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "dinner"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "desert"
+                        });
                 });
 
             modelBuilder.Entity("Rollcall.Models.User", b =>
@@ -117,12 +130,15 @@ namespace attendance.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Login")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PasswordSalt")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -133,7 +149,7 @@ namespace attendance.Migrations
             modelBuilder.Entity("Rollcall.Models.Attendance", b =>
                 {
                     b.HasOne("Rollcall.Models.Child", "TargetChild")
-                        .WithMany()
+                        .WithMany("MyAttendance")
                         .HasForeignKey("ChildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -144,7 +160,7 @@ namespace attendance.Migrations
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
                     b.HasOne("Rollcall.Models.Group", "MyGroup")
-                        .WithMany()
+                        .WithMany("Children")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -155,12 +171,24 @@ namespace attendance.Migrations
             modelBuilder.Entity("Rollcall.Models.Mask", b =>
                 {
                     b.HasOne("Rollcall.Models.Group", "MaskedGroup")
-                        .WithMany()
+                        .WithMany("Masks")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("MaskedGroup");
+                });
+
+            modelBuilder.Entity("Rollcall.Models.Child", b =>
+                {
+                    b.Navigation("MyAttendance");
+                });
+
+            modelBuilder.Entity("Rollcall.Models.Group", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Masks");
                 });
 #pragma warning restore 612, 618
         }

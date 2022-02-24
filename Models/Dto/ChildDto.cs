@@ -4,6 +4,6 @@ namespace Rollcall.Models{
         public string? Surname{get;set;}
         public int GroupId{get;set;}
         public string? GroupName{get;set;}
-        public ICollection<MealDto>? DefaultMeals{get;set;}
+        public Dictionary<string,bool>? DefaultMeals{get;set;}
     }
 }

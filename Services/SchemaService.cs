@@ -1,13 +1,16 @@
 using Rollcall.Models;
 
-namespace Rollcall.Services{
-    public class SchemaService{
-        static private readonly List<MealSchema> _schemas = new List<MealSchema>{
-            new MealSchema{Id = 1, Name = "Breakfast"},
-            new MealSchema{Id = 2, Name = "Dinner"},
-            new MealSchema{Id = 3, Name = "Desert"},
+namespace Rollcall.Services
+{
+    public class SchemaService
+    {
+        static private readonly Dictionary<string, int> _schemas = new Dictionary<string, int>{
+            {"breakfast",1},
+            {"dinner",2},
+            {"desert",3},
         };
-        public ICollection<MealSchema> GetSchemas(){
+        public Dictionary<string, int> GetSchemas()
+        {
             return _schemas;
         }
     }

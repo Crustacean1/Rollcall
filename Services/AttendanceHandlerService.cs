@@ -1,65 +1,101 @@
 using Rollcall.Models;
+using Rollcall.Repositories;
+
 namespace Rollcall.Services
 {
     public class AttendanceHandlerService
     {
-        private void SetMealAttendance(ref int mealData, bool attendance, int mealId)
+        private readonly ILogger<AttendanceHandlerService> _logger;
+        private readonly AttendanceRepository _attendanceRepo;
+        private readonly IChildRepository _childRepo;
+        private readonly IGroupRepository _groupRepo;
+        private readonly MaskRepository _maskRepo;
+        private readonly Dictionary<string, int> _schema;
+        private readonly IMealParserService _mealParser;
+        public AttendanceHandlerService(ILogger<AttendanceHandlerService> logger,
+        AttendanceRepository attendanceRepo,
+        IChildRepository childRepo,
+        IGroupRepository groupRepo,
+        MaskRepository maskRepo,
+        IMealParserService mealParser,
+        SchemaService schemaService)
         {
-            var mask = ((attendance ? 1 : 0) << mealId);
-            mealData = (mealData & (~mask)) ^ mask;
+            _logger = logger;
+            _attendanceRepo = attendanceRepo;
+            _childRepo = childRepo;
+            _groupRepo = groupRepo;
+            _maskRepo = maskRepo;
+            _mealParser = mealParser;
+            _schema = schemaService.GetSchemas();
         }
-        private bool GetMealAttendance(int mealData, int mealId)
+        public List<ChildAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
-            return ((mealData >> mealId) & 1) == 1;
+            var attendance = _attendanceRepo.GetChildAttendance(childId, year, month, day);
+            return attendance.Select(a => new ChildAttendanceDto
+            {
+                Year = a.Date.Year,
+                Month = a.Date.Month,
+                Day = a.Date.Day,
+                Meals = _mealParser.ToDto(a.Meals, _schema)
+            }).ToList();
+        }
+        public List<GroupAttendanceDto>? GetGroupAttendance(int groupId, int year, int month, int day)
+        {
+            _logger.LogInformation("Starting fetching data");
+            var result = _attendanceRepo.GetGroupAttendance(groupId, year, month);
+            foreach (var entry in result)
+            {
+                _logger.LogInformation($"Entry: {entry.Day}/{entry.Month}/{entry.Year} MealId: {entry.MealName} : {entry.MealCount}");
+            }
+            _logger.LogInformation("Done");
+        }
+        /**
+        * @name SetChildAttendance
+        * @throws ArgumentOutOfRangeException InvalidDataException
+        */
+        public async Task SetChildAttendance(int childId, int year, int month, int day, Dictionary<string, bool> meals)
+        {
+            if (day == 0)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            if (_childRepo.GetChild(childId) == null)
+            {
+                throw new InvalidDataException();
+            }
+            var attendance = new Attendance
+            {
+                ChildId = childId,
+                Meals = _mealParser.FromDto(meals, _schema),
+                Date = new DateTime(year, month, day)
+            };
+            _attendanceRepo.SetAttendance(attendance);
+            await _attendanceRepo.SaveChangesAsync();
         }
 
-        public int FromDto(ICollection<MealDto>? meals, ICollection<MealSchema>? schemas)
+        /**
+        * @name SetGroupAttendanceMask
+        * @throws ArgumentOutOfRangeException InvalidDataException
+        */
+        public async Task SetGroupAttendanceMask(int groupId, int year, int month, int day, Dictionary<string, bool> meals)
         {
-            if (schemas == null || meals == null) { throw new InvalidDataException("In AttendanceHandlerService::MealsToInt(): parameters cannot be null"); }
-            int mealData = 0;
-            foreach (var meal in meals)
+            if (day == 0)
             {
-                var mealSchema = schemas.Where((s) => s.Name == meal.Name).FirstOrDefault();
-                if (mealSchema == null)
+                throw new ArgumentOutOfRangeException();
+            }
+            if (_groupRepo.GetGroup(groupId) == null)
+            {
+                throw new InvalidDataException();
+            }
+            _maskRepo.SetMask(
+                new Mask
                 {
-                    throw new InvalidDataException($"In AttendanceHandlerService::ConvertMealData(): Invalid meal property name: {meal.Name}");
+                    GroupId = groupId,
+                    Date = new DateTime(year, month, day),
+                    Meals = _mealParser.FromDto(meals, _schema)
                 }
-                SetMealAttendance(ref mealData, meal.Present, mealSchema.Id);
-            }
-            return mealData;
-        }
-        public ICollection<MealDto> ToDto(int mealData, ICollection<MealSchema>? schemas)
-        {
-            if (schemas == null) { throw new InvalidDataException("In DayService::IntToMeals(): parameters cannot be null"); }
-            var meals = new List<MealDto>();
-            foreach (var schema in schemas)
-            {
-                meals.Add(new MealDto
-                {
-                    Name = schema.Name,
-                    Present = GetMealAttendance(mealData, schema.Id),
-                });
-            }
-            return meals;
-        }
-        public Attendance FromDto(AttendanceDto dto, ICollection<MealSchema> schema)
-        {
-            var result = new Attendance();
-            result.ChildId = dto.ChildId;
-            result.Date = new DateTime(dto.Year, dto.Month, dto.Day);
-            result.Meals = FromDto(dto.Meals, schema);
-            return result;
-        }
-        public AttendanceDto ToDto(Attendance day, ICollection<MealSchema> schemas)
-        {
-            return new AttendanceDto
-            {
-                ChildId = day.ChildId,
-                Year = day.Date.Year,
-                Month = day.Date.Month,
-                Day = day.Date.Day,
-                Meals = ToDto(day.Meals,schemas)
-            };
+            );
+            await _maskRepo.SaveChangesAsync();
         }
     }
 }

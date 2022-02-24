@@ -11,19 +11,21 @@ class Program
     static private WebApplicationBuilder? builder;
     static private void ConfigureRepositories()
     {
-        if(builder == null){return;}
+        if (builder == null) { return; }
         var sqlConnectionString = builder.Configuration.GetConnectionString("sqlConnection");
         builder.Services.AddDbContext<RepositoryContext>(options =>
         {
             options.UseMySql(sqlConnectionString, ServerVersion.AutoDetect(sqlConnectionString));
         });
         builder.Services.AddScoped<UserRepository>();
-        builder.Services.AddScoped<IGroupRepository,GroupRepository>();
-        builder.Services.AddScoped<IChildRepository,ChildRepository>();
+        builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+        builder.Services.AddScoped<IChildRepository, ChildRepository>();
+        builder.Services.AddScoped<AttendanceRepository>();
+        builder.Services.AddScoped<MaskRepository>();
     }
     static private void ConfigureAuthentication()
     {
-        if(builder == null){return;}
+        if (builder == null) { return; }
         // Note: there is a bug with newest version of Microsoft.IdentityModel assembly, should have used the other one from asp net but idk
         builder.Services.AddAuthentication(opt =>
         {
@@ -52,11 +54,14 @@ class Program
         builder.Services.AddTransient<AuthorizationService>();
 
     }
-    static public void ConfigureServices(){
-        if(builder == null){return;}
-        builder.Services.AddScoped<AttendanceHandlerService>();
+    static public void ConfigureServices()
+    {
+        if (builder == null) { return; }
+        builder.Services.AddScoped<IMealParserService, MealParserService>();
         builder.Services.AddScoped<ChildHandlerService>();
         builder.Services.AddScoped<SchemaService>();
+        builder.Services.AddScoped<DateValidationFilter>();
+        builder.Services.AddScoped<AttendanceHandlerService>();
     }
     static public void Main(String[] args)
     {
@@ -77,7 +82,7 @@ class Program
         }
 
         app.UseRouting();
-        
+
         app.UseAuthentication();
         app.UseAuthorization();
 

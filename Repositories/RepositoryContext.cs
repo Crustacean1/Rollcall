@@ -7,7 +7,16 @@ namespace Rollcall.Repositories{
 
         }
         protected override void OnModelCreating(ModelBuilder builder){
-            builder.Entity<Attendance>().HasKey((day) => new {day.ChildId,day.Date});
+            builder.Entity<Mask>().HasKey((mask) => new {mask.GroupId,mask.Date});
+
+            builder.Entity<Attendance>().HasKey((att) => new {att.ChildId,att.Date});
+
+            
+            builder.Entity<MealSchema>().HasData(new MealSchema[]{
+                new MealSchema{Name = "breakfast", Id = 1},
+                new MealSchema{Name = "dinner", Id = 2},
+                new MealSchema{Name = "desert", Id = 3}
+            });
         }
         public DbSet<User> Users{get;set;}
         public DbSet<Child> Children{get;set;}
