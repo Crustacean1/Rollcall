@@ -48,6 +48,23 @@ namespace Rollcall.Services
                 _logger.LogInformation($"Entry: {entry.Day}/{entry.Month}/{entry.Year} MealId: {entry.MealName} : {entry.MealCount}");
             }
             _logger.LogInformation("Done");
+            var dtoResult = result.GroupBy(data => new { data.Day, data.Month, data.Year })
+            .Select(day =>
+            {
+                var dict = new Dictionary<string,uint>();
+                foreach (var meal in day)
+                {
+                    dict.Add(meal.MealName, meal.MealCount);
+                }
+                return new GroupAttendanceDto
+                {
+                    Year = day.Key.Year,
+                    Month = day.Key.Month,
+                    Day = day.Key.Day,
+                    Meals = dict
+                };
+            });
+            return dtoResult.ToList();
         }
         /**
         * @name SetChildAttendance

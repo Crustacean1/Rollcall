@@ -5,9 +5,9 @@ namespace Rollcall.Services
     public class SchemaService
     {
         static private readonly Dictionary<string, int> _schemas = new Dictionary<string, int>{
-            {"breakfast",1},
-            {"dinner",2},
-            {"desert",3},
+            {"breakfast",0},
+            {"dinner",1},
+            {"desert",2},
         };
         public Dictionary<string, int> GetSchemas()
         {

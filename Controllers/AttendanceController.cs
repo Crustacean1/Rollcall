@@ -24,8 +24,14 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<List<ChildAttendanceDto>> GetChildAttendance(int childId, int year, int month, int day)
         {
-            _logger.LogInformation($"Entered GetAttendance, ${childId} ${year}/${month}/${day}");
-            return _attendanceHandler.GetChildAttendance(childId, year, month, day);
+            try
+            {
+                return _attendanceHandler.GetChildAttendance(childId, year, month, day);
+            }
+            catch (InvalidDataException e)
+            {
+                return NotFound();
+            }
         }
 
         [HttpGet, Authorize]
@@ -33,8 +39,14 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<List<GroupAttendanceDto>> GetGroupAttendance(int groupId, int year, int month, int day)
         {
-            _attendanceHandler.GetGroupAttendance(groupId,year,month,day);
-            return Ok(new List<GroupAttendanceDto>());
+            try
+            {
+                return Ok(_attendanceHandler.GetGroupAttendance(groupId, year, month, day));
+            }
+            catch (InvalidDataException e)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost, Authorize]
@@ -63,11 +75,24 @@ namespace Rollcall.Controllers
         [HttpPost, Authorize]
         [Route("group/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult> SetAttendanceMask(int groupId, int year, int month, int day, [FromBody] Dictionary<string,bool> mealDto)
+        public async Task<ActionResult> SetAttendanceMask(int groupId, int year, int month, int day, [FromBody] Dictionary<string, bool> mealDto)
         {
             _logger.LogInformation("Setting attendance mask");
-            //_maskRepository.AddMask();
-            await _attendanceHandler.SetGroupAttendanceMask(groupId,year,month,day,mealDto);
+            try
+            {
+                try
+                {
+                    await _attendanceHandler.SetGroupAttendanceMask(groupId, year, month, day, mealDto);
+                }
+                catch (InvalidDataException e)
+                {
+                    return NotFound();
+                }
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                return BadRequest();
+            }
             return Ok();
         }
     }

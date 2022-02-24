@@ -11,11 +11,12 @@ namespace Rollcall.Repositories{
 
             builder.Entity<Attendance>().HasKey((att) => new {att.ChildId,att.Date});
 
+            builder.Entity<MealSchema>().HasKey(s => s.Name);
             
             builder.Entity<MealSchema>().HasData(new MealSchema[]{
-                new MealSchema{Name = "breakfast", Id = 1},
-                new MealSchema{Name = "dinner", Id = 2},
-                new MealSchema{Name = "desert", Id = 3}
+                new MealSchema{Name = "breakfast", Mask = 1},
+                new MealSchema{Name = "dinner", Mask = 2},
+                new MealSchema{Name = "desert", Mask = 4}
             });
         }
         public DbSet<User> Users{get;set;}

@@ -9,9 +9,8 @@ namespace Rollcall.Repositories
         public int Year { get; set; }
         public int Month { get; set; }
         public int Day { get; set; }
-        public int Breakfast{get;set;}
-        public int Dinner{get;set;}
-        public int Desert{get;set;}
+        public string MealName { get; set; }
+        public uint MealCount { get; set; }
     }
     public class AttendanceRepository : RepositoryBase
     {
@@ -33,14 +32,15 @@ namespace Rollcall.Repositories
             join allmasks in _context.Set<Mask>() on new { attendance.Date, attendance.TargetChild.GroupId } equals new { allmasks.Date, allmasks.GroupId } into nullMasks
             from masks in nullMasks.DefaultIfEmpty()
             where attendance.Date.Year == year && attendance.Date.Month == month && attendance.TargetChild.GroupId == groupId
-            group new { schema, attendance, masks } by new { schema.Id, attendance.Date} into maskedAttendance
+            group new { schema, attendance, masks } by new { schema.Name, attendance.Date } into maskedAttendance
             select new MealData
             {
-                MealName = maskedAttendance.First().schema.Name,
+                MealName = maskedAttendance.Key.Name,
                 Year = maskedAttendance.Key.Date.Year,
                 Month = maskedAttendance.Key.Date.Month,
                 Day = maskedAttendance.Key.Date.Day,
-                Breakfast = maskedAttendance.Sum(m => m.attendance.Meals & (int)Math.Pow(2, m.schema.Id) & ((m.masks == null) ? 2047 : m.masks.Meals))
+                MealCount = (uint)maskedAttendance.Sum(m => 
+                ((m.attendance.Meals & m.schema.Mask & ((m.masks == null) ? 2047 : m.masks.Meals)) != 0) ? 1 : 0)
             };
             return result;
         }
