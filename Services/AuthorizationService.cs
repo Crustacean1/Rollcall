@@ -14,10 +14,15 @@ namespace Rollcall.Services
         private int _keyIterationCount = 100000;
         private int _keyBitLength = 256 / 8;
         private int _saltBitLength = 8;
-        public AuthorizationService(UserRepository repository,JwtIssuerService jwtIssuer)
+        public AuthorizationService(UserRepository repository, JwtIssuerService jwtIssuer)
         {
             _repository = repository;
             _issuerService = jwtIssuer;
+        }
+        public bool ShouldRegisterUser(UserRegistrationDto userCred)
+        {
+            var _user = _repository.GetUserCount();
+            return _user == 0;
         }
         public string? AuthorizeUser(UserRegistrationDto userCred)
         {
@@ -32,16 +37,17 @@ namespace Rollcall.Services
             }
             return null;
         }
-        public User CreateUser(UserRegistrationDto userDto)
+        public async Task CreateUser(UserRegistrationDto userDto)
         {
             var salt = GenerateRandomSalt();
             User user = new User
             {
                 Login = userDto.Login,
                 PasswordHash = GetPasswordHash(userDto.Password, toRawSalt(salt)),
-                PasswordSalt = salt 
+                PasswordSalt = salt
             };
-            return user;
+            _repository.AddUser(user);
+            await _repository.SaveChangesAsync();
         }
         private string GetPasswordHash(string password, byte[] salt)
         {
@@ -56,7 +62,7 @@ namespace Rollcall.Services
             }
             return toCleanSalt(salt);
         }
-        private string toCleanSalt(byte[] salt){return Convert.ToBase64String(salt);}
-        private byte[] toRawSalt(string salt){return Convert.FromBase64String(salt);}
+        private string toCleanSalt(byte[] salt) { return Convert.ToBase64String(salt); }
+        private byte[] toRawSalt(string salt) { return Convert.FromBase64String(salt); }
     }
 }

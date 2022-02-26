@@ -26,7 +26,8 @@ namespace Rollcall.Controllers
         {
             try
             {
-                return _attendanceHandler.GetChildAttendance(childId, year, month, day);
+                var childAttendanceCount = _attendanceHandler.GetChildAttendance(childId, year, month, day);
+                return childAttendanceCount;
             }
             catch (InvalidDataException e)
             {
@@ -41,6 +42,7 @@ namespace Rollcall.Controllers
         {
             try
             {
+                _logger.LogInformation("Getting group attendance");
                 return Ok(_attendanceHandler.GetGroupAttendance(groupId, year, month, day));
             }
             catch (InvalidDataException e)

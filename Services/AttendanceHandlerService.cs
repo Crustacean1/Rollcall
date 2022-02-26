@@ -6,61 +6,65 @@ namespace Rollcall.Services
     public class AttendanceHandlerService
     {
         private readonly ILogger<AttendanceHandlerService> _logger;
-        private readonly AttendanceRepository _attendanceRepo;
-        private readonly IChildRepository _childRepo;
-        private readonly IGroupRepository _groupRepo;
-        private readonly MaskRepository _maskRepo;
+        //private readonly AttendanceRepository _attendanceRepo;
+        //private readonly IChildRepository _childRepo;
+        //private readonly IGroupRepository _groupRepo;
+        //private readonly MaskRepository _maskRepo;
         private readonly Dictionary<string, int> _schema;
         private readonly IMealParserService _mealParser;
         public AttendanceHandlerService(ILogger<AttendanceHandlerService> logger,
-        AttendanceRepository attendanceRepo,
-        IChildRepository childRepo,
-        IGroupRepository groupRepo,
-        MaskRepository maskRepo,
+        //AttendanceRepository attendanceRepo,
+        //IChildRepository childRepo,
+        //IGroupRepository groupRepo,
+        //MaskRepository maskRepo,
         IMealParserService mealParser,
         SchemaService schemaService)
         {
             _logger = logger;
-            _attendanceRepo = attendanceRepo;
-            _childRepo = childRepo;
-            _groupRepo = groupRepo;
-            _maskRepo = maskRepo;
+            //_attendanceRepo = attendanceRepo;
+            //_childRepo = childRepo;
+            //_groupRepo = groupRepo;
+            //_maskRepo = maskRepo;
             _mealParser = mealParser;
             _schema = schemaService.GetSchemas();
         }
-        public List<ChildAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
+        public List<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
             var attendance = _attendanceRepo.GetChildAttendance(childId, year, month, day);
             return attendance.Select(a => new ChildAttendanceDto
             {
-                Year = a.Date.Year,
-                Month = a.Date.Month,
-                Day = a.Date.Day,
+                Date = new MealDate
+                {
+                    Year = a.Date.Year,
+                    Month = a.Date.Month,
+                    Day = a.Date.Day,
+                },
                 Meals = _mealParser.ToDto(a.Meals, _schema)
             }).ToList();
         }
         public List<GroupAttendanceDto>? GetGroupAttendance(int groupId, int year, int month, int day)
         {
-            _logger.LogInformation("Starting fetching data");
             var result = _attendanceRepo.GetGroupAttendance(groupId, year, month);
-            foreach (var entry in result)
+            /*foreach (var entry in result)
             {
                 _logger.LogInformation($"Entry: {entry.Day}/{entry.Month}/{entry.Year} MealId: {entry.MealName} : {entry.MealCount}");
-            }
-            _logger.LogInformation("Done");
+            }*/
             var dtoResult = result.GroupBy(data => new { data.Day, data.Month, data.Year })
             .Select(day =>
             {
-                var dict = new Dictionary<string,uint>();
+                var dict = new Dictionary<string, uint>();
                 foreach (var meal in day)
                 {
                     dict.Add(meal.MealName, meal.MealCount);
                 }
                 return new GroupAttendanceDto
                 {
-                    Year = day.Key.Year,
-                    Month = day.Key.Month,
-                    Day = day.Key.Day,
+                    Date = new MealDate
+                    {
+                        Year = day.Key.Year,
+                        Month = day.Key.Month,
+                        Day = day.Key.Day,
+                    },
                     Meals = dict
                 };
             });

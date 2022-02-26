@@ -72,6 +72,7 @@ class Program
         ConfigureAuthentication();
         ConfigureServices();
 
+        builder.Services.AddCors();
         builder.Services.AddControllers();
 
         var app = builder.Build();
@@ -82,6 +83,7 @@ class Program
         }
 
         app.UseRouting();
+        app.UseCors(options => options.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
 
         app.UseAuthentication();
         app.UseAuthorization();

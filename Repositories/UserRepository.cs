@@ -19,6 +19,8 @@ namespace Rollcall.Repositories{
         public void SaveChanges(){
             _repoContext.SaveChanges();
         }
-
+        public int GetUserCount(){
+            return _repoContext.Users.Count();
+        }
     }
 }
