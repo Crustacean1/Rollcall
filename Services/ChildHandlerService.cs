@@ -9,7 +9,7 @@ namespace Rollcall.Services
         {
             _parserService = parserService;
         }
-        public ChildDto ToDto(Child child, Dictionary<string, int> schemas)
+        public ChildDto ToDto(Child child)
         {
             return new ChildDto
             {
@@ -17,17 +17,17 @@ namespace Rollcall.Services
                 Surname = child.Surname,
                 GroupId = child.GroupId,
                 GroupName = (child.MyGroup == null) ? "" : child.MyGroup.Name,
-                DefaultMeals = _parserService.ToDto(child.DefaultMeals, schemas)
+                DefaultMeals = _parserService.ToDict(child.DefaultMeals)
             };
         }
-        public Child FromDto(ChildDto dto, Dictionary<string, int> schemas)
+        public Child FromDto(ChildDto dto)
         {
             return new Child
             {
                 Name = dto.Name,
                 Surname = dto.Surname,
                 GroupId = dto.GroupId,
-                DefaultMeals = _parserService.FromDto(dto.DefaultMeals, schemas)
+                DefaultMeals = _parserService.FromDict(dto.DefaultMeals)
             };
         }
     }

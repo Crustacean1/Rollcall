@@ -5,7 +5,7 @@ namespace Rollcall.Models
     public class Mask
     {
         public Group MaskedGroup { get; set; }
-        public int Meals { get; set; }
+        public uint Meals { get; set; }
         public int GroupId { get; set; }
 
         [Column(TypeName = "date")]

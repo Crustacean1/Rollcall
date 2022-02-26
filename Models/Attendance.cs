@@ -5,7 +5,7 @@ namespace Rollcall.Models
     {
         public int ChildId { get; set; }
         public Child TargetChild { get; set; }
-        public int Meals { get; set; }
+        public uint Meals { get; set; }
         [Column(TypeName = "date")]
         public DateTime Date { get; set; }
     }

@@ -6,32 +6,25 @@ namespace Rollcall.Services
     public class AttendanceHandlerService
     {
         private readonly ILogger<AttendanceHandlerService> _logger;
-        //private readonly AttendanceRepository _attendanceRepo;
-        //private readonly IChildRepository _childRepo;
-        //private readonly IGroupRepository _groupRepo;
-        //private readonly MaskRepository _maskRepo;
-        private readonly Dictionary<string, int> _schema;
+        private readonly AttendanceRepository _attendanceRepo;
+        private readonly IChildRepository _childRepo;
         private readonly IMealParserService _mealParser;
         public AttendanceHandlerService(ILogger<AttendanceHandlerService> logger,
-        //AttendanceRepository attendanceRepo,
-        //IChildRepository childRepo,
-        //IGroupRepository groupRepo,
-        //MaskRepository maskRepo,
-        IMealParserService mealParser,
-        SchemaService schemaService)
+        AttendanceRepository attendanceRepo,
+        IChildRepository childRepo,
+        IGroupRepository groupRepo,
+        IMealParserService mealParser
+        )
         {
             _logger = logger;
-            //_attendanceRepo = attendanceRepo;
-            //_childRepo = childRepo;
-            //_groupRepo = groupRepo;
-            //_maskRepo = maskRepo;
+
+            _attendanceRepo = attendanceRepo;
+            _childRepo = childRepo;
             _mealParser = mealParser;
-            _schema = schemaService.GetSchemas();
         }
-        public List<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
+        private AttendanceDto ToAttendanceDto(Attendance a)
         {
-            var attendance = _attendanceRepo.GetChildAttendance(childId, year, month, day);
-            return attendance.Select(a => new ChildAttendanceDto
+            return new AttendanceDto
             {
                 Date = new MealDate
                 {
@@ -39,16 +32,19 @@ namespace Rollcall.Services
                     Month = a.Date.Month,
                     Day = a.Date.Day,
                 },
-                Meals = _mealParser.ToDto(a.Meals, _schema)
-            }).ToList();
+                Meals = _mealParser.ToDict(a.Meals)
+            };
         }
-        public List<GroupAttendanceDto>? GetGroupAttendance(int groupId, int year, int month, int day)
+        public List<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
+        {
+            var attendance = _attendanceRepo.GetChildAttendance(childId, year, month, day);
+            return attendance.Select(a => ToAttendanceDto(a)).ToList();
+        }
+        public List<AttendanceSummaryDto>? GetGroupAttendance(int groupId, int year, int month, int day)
         {
             var result = _attendanceRepo.GetGroupAttendance(groupId, year, month);
-            /*foreach (var entry in result)
-            {
-                _logger.LogInformation($"Entry: {entry.Day}/{entry.Month}/{entry.Year} MealId: {entry.MealName} : {entry.MealCount}");
-            }*/
+            if (result == null) { return null; }
+
             var dtoResult = result.GroupBy(data => new { data.Day, data.Month, data.Year })
             .Select(day =>
             {
@@ -57,7 +53,7 @@ namespace Rollcall.Services
                 {
                     dict.Add(meal.MealName, meal.MealCount);
                 }
-                return new GroupAttendanceDto
+                return new AttendanceSummaryDto
                 {
                     Date = new MealDate
                     {
@@ -87,9 +83,10 @@ namespace Rollcall.Services
             var attendance = new Attendance
             {
                 ChildId = childId,
-                Meals = _mealParser.FromDto(meals, _schema),
+                Meals = _mealParser.FromDict(meals),
                 Date = new DateTime(year, month, day)
             };
+
             _attendanceRepo.SetAttendance(attendance);
             await _attendanceRepo.SaveChangesAsync();
         }
@@ -98,7 +95,7 @@ namespace Rollcall.Services
         * @name SetGroupAttendanceMask
         * @throws ArgumentOutOfRangeException InvalidDataException
         */
-        public async Task SetGroupAttendanceMask(int groupId, int year, int month, int day, Dictionary<string, bool> meals)
+        /*public async Task SetGroupAttendanceMask(int groupId, int year, int month, int day, Dictionary<string, bool> meals)
         {
             if (day == 0)
             {
@@ -117,6 +114,6 @@ namespace Rollcall.Services
                 }
             );
             await _maskRepo.SaveChangesAsync();
-        }
+        }*/
     }
 }

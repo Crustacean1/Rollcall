@@ -57,9 +57,10 @@ class Program
     static public void ConfigureServices()
     {
         if (builder == null) { return; }
-        builder.Services.AddScoped<IMealParserService, MealParserService>();
+        builder.Services.AddSingleton<SchemaService>();
+        builder.Services.AddSingleton<IMealParserService, MealParserService>();
+
         builder.Services.AddScoped<ChildHandlerService>();
-        builder.Services.AddScoped<SchemaService>();
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<AttendanceHandlerService>();
     }

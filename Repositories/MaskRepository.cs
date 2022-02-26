@@ -16,5 +16,11 @@ namespace Rollcall.Repositories
             }
             _context.Masks.Add(mask);
         }
+
+        public IEnumerable<Mask> GetMasks(int groupId, int year, int month, int day)
+        {
+            return _context.Masks.Where(m =>
+            m.GroupId == groupId && m.Date.Year == year && m.Date.Month == month && (m.Date.Day == day || day == 0));
+        }
     }
 }

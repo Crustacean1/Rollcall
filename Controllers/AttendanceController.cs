@@ -22,7 +22,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("child/{childId}/{year}/{month}/{day?}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<ChildAttendanceDto>> GetChildAttendance(int childId, int year, int month, int day)
+        public ActionResult<List<AttendanceDto>> GetChildAttendance(int childId, int year, int month, int day)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("group/{groupId}/{year}/{month}/{day?}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<GroupAttendanceDto>> GetGroupAttendance(int groupId, int year, int month, int day)
+        public ActionResult<List<AttendanceSummaryDto>> GetGroupAttendance(int groupId, int year, int month, int day)
         {
             try
             {
@@ -74,28 +74,5 @@ namespace Rollcall.Controllers
             return Ok();
         }
 
-        [HttpPost, Authorize]
-        [Route("group/{groupId}/{year}/{month}/{day}")]
-        [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult> SetAttendanceMask(int groupId, int year, int month, int day, [FromBody] Dictionary<string, bool> mealDto)
-        {
-            _logger.LogInformation("Setting attendance mask");
-            try
-            {
-                try
-                {
-                    await _attendanceHandler.SetGroupAttendanceMask(groupId, year, month, day, mealDto);
-                }
-                catch (InvalidDataException e)
-                {
-                    return NotFound();
-                }
-            }
-            catch (ArgumentOutOfRangeException e)
-            {
-                return BadRequest();
-            }
-            return Ok();
-        }
     }
 }

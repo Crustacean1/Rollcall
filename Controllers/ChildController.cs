@@ -14,17 +14,15 @@ namespace Rollcall.Controllers
         private readonly IChildRepository _childRepository;
         private readonly IGroupRepository _groupRepository;
         private readonly ChildHandlerService _childService;
-        private readonly SchemaService _schemaService;
         private readonly ILogger<ChildController> _logger;
 
         public ChildController(ILogger<ChildController> logger, IChildRepository childRepository,
-         IGroupRepository groupRepository, ChildHandlerService childService, SchemaService schemaService)
+         IGroupRepository groupRepository, ChildHandlerService childService)
         {
             _logger = logger;
             _childRepository = childRepository;
             _groupRepository = groupRepository;
             _childService = childService;
-            _schemaService = schemaService;
         }
 
         [HttpGet, Authorize]
@@ -32,12 +30,11 @@ namespace Rollcall.Controllers
         public ActionResult<ChildDto> GetChild(int childId)
         {
             var child = _childRepository.GetChild(childId);
-            var schemas = _schemaService.GetSchemas();
             if (child == null)
             {
                 return NotFound();
             }
-            return Ok(_childService.ToDto(child,schemas));
+            return Ok(_childService.ToDto(child));
         }
 
         [HttpGet, Authorize]
@@ -46,9 +43,8 @@ namespace Rollcall.Controllers
         {
             ICollection<Child> children;
             children = _childRepository.GetChildrenByGroup(groupId);
-            var schemas = _schemaService.GetSchemas();
 
-            return Ok(children.Select(child => _childService.ToDto(child,schemas)).ToList());
+            return Ok(children.Select(child => _childService.ToDto(child)).ToList());
         }
 
         [HttpGet, Authorize]
@@ -56,18 +52,15 @@ namespace Rollcall.Controllers
         {
             ICollection<Child> children;
             children = _childRepository.GetChildrenByGroup();
-            var schemas = _schemaService.GetSchemas();
 
-            return Ok(children.Select(child => _childService.ToDto(child, schemas)).ToList());
+            return Ok(children.Select(child => _childService.ToDto(child)).ToList());
         }
 
         [HttpPost, Authorize]
         public async Task<ActionResult> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
         {
             _logger.LogInformation("Adding children");
-            var schemas = _schemaService.GetSchemas();
-            _logger.LogInformation($"Found {schemas.Count} schemas");
-            var children = childrenDto.Select(e => _childService.FromDto(e, schemas));
+            var children = childrenDto.Select(e => _childService.FromDto(e));
             _childRepository.AddChildren(children);
             await _childRepository.SaveChangesAsync();
             return Ok();
