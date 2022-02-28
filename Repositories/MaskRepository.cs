@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Rollcall.Models;
 
 namespace Rollcall.Repositories
@@ -6,21 +7,26 @@ namespace Rollcall.Repositories
     {
         public MaskRepository(RepositoryContext context) : base(context) { }
 
-        public void SetMask(Mask mask)
+        public void AddMask(Mask mask)
         {
-            var prevMask = _context.Masks.Where(m => m == mask).SingleOrDefault();
-            if (prevMask != null)
-            {
-                prevMask.Meals = mask.Meals;
-                return;
-            }
             _context.Masks.Add(mask);
         }
-
-        public IEnumerable<Mask> GetMasks(int groupId, int year, int month, int day)
+        public void AddMasks(List<Mask> masks)
         {
-            return _context.Masks.Where(m =>
+            _context.Masks.AddRange(masks);
+        }
+        public IEnumerable<Mask> GetMasks(int groupId, int year, int month, int day, bool track = false)
+        {
+            var query = track ? _context.Masks : _context.Masks.AsNoTracking();
+            return query.Where(m =>
             m.GroupId == groupId && m.Date.Year == year && m.Date.Month == month && (m.Date.Day == day || day == 0));
+        }
+
+        public Mask? GetMask(int groupId, int year, int month, int day, bool track = false)
+        {
+            var query = track ? _context.Masks : _context.Masks.AsNoTracking();
+            return query.Where(m =>
+            m.GroupId == groupId && m.Date.Year == year && m.Date.Month == month && m.Date.Day == day).FirstOrDefault();
         }
     }
 }

@@ -39,20 +39,18 @@ namespace Rollcall.Repositories
                 Year = maskedAttendance.Key.Date.Year,
                 Month = maskedAttendance.Key.Date.Month,
                 Day = maskedAttendance.Key.Date.Day,
-                MealCount = (uint)maskedAttendance.Sum(m => 
+                MealCount = (uint)maskedAttendance.Sum(m =>
                 ((m.attendance.Meals & m.schema.Mask & ((m.masks == null) ? 2047 : m.masks.Meals)) != 0) ? 1 : 0)
             };
             return result;
         }
-
-        public void SetAttendance(Attendance attendance)
+        public Attendance? GetAttendance(DateTime date, int childId, bool track = false)
         {
-            var prev = _context.Attendance.Where(a => a.Date == attendance.Date && a.ChildId == attendance.ChildId).FirstOrDefault();
-            if (prev != null)
-            {
-                prev.Meals = attendance.Meals;
-                return;
-            }
+            var query = track ? _context.Attendance : _context.Attendance.AsNoTracking();
+            return query.Where(a => a.Date == date && a.ChildId == childId).FirstOrDefault();
+        }
+        public void AddAttendance(Attendance attendance)
+        {
             _context.Attendance.Add(attendance);
         }
     }

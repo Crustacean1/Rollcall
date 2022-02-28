@@ -8,10 +8,10 @@ namespace Rollcall.Services
         private readonly MaskRepository _maskRepo;
         private readonly IGroupRepository _groupRepo;
         private readonly ILogger<MaskHandlerService> _logger;
-        private readonly IMealParserService _mealParser;
+        private readonly IAttendanceParserService _mealParser;
         public MaskHandlerService(MaskRepository maskRepo,
         IGroupRepository groupRepo,
-        IMealParserService mealParser,
+        IAttendanceParserService mealParser,
         ILogger<MaskHandlerService> logger)
         {
             _maskRepo = maskRepo;
@@ -19,15 +19,26 @@ namespace Rollcall.Services
             _mealParser = mealParser;
             _logger = logger;
         }
-        public async Task SetMask(int groupId, int year, int month, int day, Dictionary<string, bool> mealMask)
+        public async Task<Dictionary<string, bool>> SetMask(int groupId, int year, int month, int day, Dictionary<string, bool> mealMask)
         {
-            _maskRepo.SetMask(new Mask
+            var mask = _maskRepo.GetMask(groupId, year, month, day, true);
+
+            if (mask != null)
             {
-                Meals = _mealParser.FromDict(mealMask),
-                GroupId = groupId,
-                Date = new DateTime(year, month, day)
-            });
+                mask.Meals = _mealParser.ChangeAttendance(mask.Meals, mealMask);
+            }
+            else
+            {
+                mask = new Mask
+                {
+                    Meals = _mealParser.ChangeAttendance(_mealParser.GetFullAttendance(), mealMask),
+                    GroupId = groupId,
+                    Date = new DateTime(year, month, day)
+                };
+                _maskRepo.AddMask(mask);
+            }
             await _maskRepo.SaveChangesAsync();
+            return _mealParser.Parse(mask.Meals);
         }
         public List<AttendanceDto> GetMasks(int groupId, int year, int month, int day)
         {
@@ -41,9 +52,30 @@ namespace Rollcall.Services
                         Month = m.Date.Month,
                         Day = m.Date.Day
                     },
-                    Meals = _mealParser.ToDict(m.Meals)
+                    Meals = _mealParser.Parse(m.Meals)
                 };
             }).ToList();
+        }
+        public async Task ProlongMasks(int groupId, int year, int month)
+        {
+            var prolongedMasks = new List<Mask>();
+
+            for (var date = new DateTime(year, month, 1); date.Month == month; date.AddDays(1))
+            {
+                uint meals = _mealParser.GetFullAttendance();
+                if (date.DayOfWeek == DayOfWeek.Sunday || date.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    meals = _mealParser.GetEmptyAttendance();
+                }
+                prolongedMasks.Add(new Mask
+                {
+                    Meals = meals,
+                    Date = date,
+                    GroupId = groupId
+                });
+            }
+            _maskRepo.AddMasks(prolongedMasks);
+            await _maskRepo.SaveChangesAsync();
         }
     }
 }

@@ -58,9 +58,10 @@ class Program
     {
         if (builder == null) { return; }
         builder.Services.AddSingleton<SchemaService>();
-        builder.Services.AddSingleton<IMealParserService, MealParserService>();
+        builder.Services.AddSingleton<IAttendanceParserService, AttendanceParserService>();
 
         builder.Services.AddScoped<ChildHandlerService>();
+        builder.Services.AddScoped<MaskHandlerService>();
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<AttendanceHandlerService>();
     }

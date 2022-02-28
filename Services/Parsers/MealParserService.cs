@@ -1,22 +1,29 @@
 namespace Rollcall.Services
 {
-    public class MealParserService : IMealParserService
+    public class AttendanceParserService : IAttendanceParserService
     {
+        protected readonly ILogger<AttendanceParserService> _logger;
         protected readonly Dictionary<string, int> _schemas;
-        private void SetMealAttendance(ref uint mealData, bool attendance, int mealId)
+        private uint AddMeal(uint meal, uint mealMask, bool value)
         {
-            uint mask = ((attendance ? 1u : 0u) << mealId);
-            mealData = (mealData & (~mask)) | mask;
+            return (meal & (~mealMask) | (value ? mealMask : 0));
+        }
+        private uint SetMealAttendance(uint mealData, int mealId, bool attendance)
+        {
+            uint newMeal = (1u << mealId);
+            mealData = AddMeal(mealData, newMeal, attendance);
+            return mealData;
         }
         private uint GetMealAttendance(uint mealData, int mealId)
         {
             return (mealData >> mealId) & 1;
         }
-        public MealParserService(SchemaService schemaService)
+        public AttendanceParserService(SchemaService schemaService, ILogger<AttendanceParserService> logger)
         {
+            _logger = logger;
             _schemas = schemaService.GetSchemas();
         }
-        public uint FromDict(Dictionary<string, bool>? meals)
+        public uint Marshall(Dictionary<string, bool>? meals)
         {
             if (meals == null) { throw new InvalidDataException("In AttendanceParserService::MealsToInt(): parameters cannot be null"); }
             uint mealData = 0;
@@ -26,11 +33,11 @@ namespace Rollcall.Services
                 {
                     throw new InvalidDataException($"In AttendanceParserService::ConvertMealData(): Invalid meal property name: '{meal.Key}'");
                 }
-                SetMealAttendance(ref mealData, meal.Value, _schemas[meal.Key]);
+                mealData = SetMealAttendance(mealData, _schemas[meal.Key], meal.Value);
             }
             return mealData;
         }
-        public Dictionary<string, bool> ToDict(uint mealData)
+        public Dictionary<string, bool> Parse(uint mealData)
         {
             var meals = new Dictionary<string, bool>();
             foreach (var schema in _schemas)
@@ -39,6 +46,21 @@ namespace Rollcall.Services
             }
             return meals;
         }
-
+        public uint ChangeAttendance(uint meal, Dictionary<string, bool> newMeals)
+        {
+            foreach (var newMeal in newMeals)
+            {
+                meal = SetMealAttendance(meal, _schemas[newMeal.Key], newMeal.Value);
+            }
+            return meal;
+        }
+        public uint GetFullAttendance()
+        {
+            return 7;
+        }
+        public uint GetEmptyAttendance()
+        {
+            return 0;
+        }
     }
 }

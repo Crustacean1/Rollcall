@@ -51,16 +51,24 @@ namespace Rollcall.Controllers
             }
         }
 
+        [HttpGet, Authorize]
+        [Route("group/{groupId}/summary/{year}/{month}")]
+        [ServiceFilter(typeof(DateValidationFilter))]
+        public ActionResult<AttendanceSummaryDto> GetGroupMonthlySummary(int groupId, int year, int month)
+        {
+            _attendanceHandler.Get
+        }
+
         [HttpPost, Authorize]
         [Route("child/{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult> SetAttendance(int childId, int year, int month, int day, [FromBody] Dictionary<string, bool> dto)
+        public async Task<ActionResult<Attendance>> SetAttendance(int childId, int year, int month, int day, [FromBody] Dictionary<string, bool> dto)
         {
             try
             {
                 try
                 {
-                    await _attendanceHandler.SetChildAttendance(childId, year, month, day, dto);
+                    await _attendanceHandler.AddChildAttendance(childId, year, month, day, dto);
                 }
                 catch (InvalidDataException e)
                 {
@@ -71,7 +79,7 @@ namespace Rollcall.Controllers
             {
                 return BadRequest("Date is not specified");
             }
-            return Ok();
+            return Ok(_attendanceHandler.GetChildAttendance(childId, year, month, day));
         }
 
     }

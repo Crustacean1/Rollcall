@@ -1,8 +1,13 @@
 namespace Rollcall.Services
 {
-    public interface IMealParserService
+    public interface IAttendanceParserService
     {
-        public Dictionary<string, bool> ToDict(uint mask);
-        public uint FromDict(Dictionary<string, bool> dto);
+        public Dictionary<string, bool> Parse(uint mask);
+        public uint Marshall(Dictionary<string, bool> dto);
+
+        public uint ChangeAttendance(uint meal, Dictionary<string, bool> newMeals);
+
+        public uint GetFullAttendance();
+        public uint GetEmptyAttendance();
     }
 }

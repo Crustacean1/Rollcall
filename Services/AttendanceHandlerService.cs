@@ -8,19 +8,19 @@ namespace Rollcall.Services
         private readonly ILogger<AttendanceHandlerService> _logger;
         private readonly AttendanceRepository _attendanceRepo;
         private readonly IChildRepository _childRepo;
-        private readonly IMealParserService _mealParser;
+        private readonly IAttendanceParserService _attendanceParser;
         public AttendanceHandlerService(ILogger<AttendanceHandlerService> logger,
         AttendanceRepository attendanceRepo,
         IChildRepository childRepo,
         IGroupRepository groupRepo,
-        IMealParserService mealParser
+        IAttendanceParserService attendanceParser
         )
         {
             _logger = logger;
 
             _attendanceRepo = attendanceRepo;
             _childRepo = childRepo;
-            _mealParser = mealParser;
+            _attendanceParser = attendanceParser;
         }
         private AttendanceDto ToAttendanceDto(Attendance a)
         {
@@ -32,7 +32,7 @@ namespace Rollcall.Services
                     Month = a.Date.Month,
                     Day = a.Date.Day,
                 },
-                Meals = _mealParser.ToDict(a.Meals)
+                Meals = _attendanceParser.Parse(a.Meals)
             };
         }
         public List<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
@@ -70,7 +70,7 @@ namespace Rollcall.Services
         * @name SetChildAttendance
         * @throws ArgumentOutOfRangeException InvalidDataException
         */
-        public async Task SetChildAttendance(int childId, int year, int month, int day, Dictionary<string, bool> meals)
+        public async Task AddChildAttendance(int childId, int year, int month, int day, Dictionary<string, bool> meals)
         {
             if (day == 0)
             {
@@ -80,40 +80,25 @@ namespace Rollcall.Services
             {
                 throw new InvalidDataException();
             }
-            var attendance = new Attendance
-            {
-                ChildId = childId,
-                Meals = _mealParser.FromDict(meals),
-                Date = new DateTime(year, month, day)
-            };
+            var date = new DateTime(year, month, day);
+            var prevAttendance = _attendanceRepo.GetAttendance(date, childId, true);
 
-            _attendanceRepo.SetAttendance(attendance);
+            if (prevAttendance != null)
+            {
+                prevAttendance.Meals = _attendanceParser.ChangeAttendance(prevAttendance.Meals, meals);
+            }
+            else
+            {
+                var attendance = new Attendance
+                {
+                    ChildId = childId,
+                    Meals = _attendanceParser.Marshall(meals),
+                    Date = new DateTime(year, month, day)
+                };
+                _attendanceRepo.AddAttendance(attendance);
+            }
+
             await _attendanceRepo.SaveChangesAsync();
         }
-
-        /**
-        * @name SetGroupAttendanceMask
-        * @throws ArgumentOutOfRangeException InvalidDataException
-        */
-        /*public async Task SetGroupAttendanceMask(int groupId, int year, int month, int day, Dictionary<string, bool> meals)
-        {
-            if (day == 0)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-            if (_groupRepo.GetGroup(groupId) == null)
-            {
-                throw new InvalidDataException();
-            }
-            _maskRepo.SetMask(
-                new Mask
-                {
-                    GroupId = groupId,
-                    Date = new DateTime(year, month, day),
-                    Meals = _mealParser.FromDto(meals, _schema)
-                }
-            );
-            await _maskRepo.SaveChangesAsync();
-        }*/
     }
 }
