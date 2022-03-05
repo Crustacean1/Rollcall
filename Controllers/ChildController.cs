@@ -12,7 +12,6 @@ namespace Rollcall.Controllers
     public class ChildController : ControllerBase
     {
         private readonly ChildRepository _childRepository;
-        private readonly IMealParserService _mealParser;
         private readonly ILogger<ChildController> _logger;
 
         private Child Parse(ChildDto dto)
@@ -21,7 +20,11 @@ namespace Rollcall.Controllers
             {
                 Name = dto.Name,
                 Surname = dto.Surname,
-                DefaultMeals = _mealParser.Parse(dto.DefaultAttendance),
+                DefaultMeals = dto.DefaultAttendance.Select(d => new DefaultAttendance
+                {
+                    MealId = 0,
+                    Attendance = d.Present
+                }),
                 GroupId = dto.GroupId,
             };
         }
@@ -32,18 +35,23 @@ namespace Rollcall.Controllers
                 GroupName = child.MyGroup.Name,
                 Name = child.Name,
                 Surname = child.Surname,
-                DefaultAttendance = _mealParser.Marshall(child.DefaultMeals),
+                DefaultAttendance = child.DefaultMeals.Select(
+                    d => new AttendanceRequestDto
+                    {
+                        Name = "break",
+                        Present = d.Attendance
+                    }
+                ),
                 GroupId = child.GroupId,
                 Id = child.Id
             };
         }
 
         public ChildController(ILogger<ChildController> logger, ChildRepository childRepository,
-         GroupRepository groupRepository, IMealParserService mealParser)
+         GroupRepository groupRepository)
         {
             _logger = logger;
             _childRepository = childRepository;
-            _mealParser = mealParser;
         }
 
         [HttpGet, Authorize]

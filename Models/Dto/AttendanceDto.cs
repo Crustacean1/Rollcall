@@ -11,4 +11,9 @@ namespace Rollcall.Models
         public Dictionary<string, MealDto> Attendance { get; set; }
         public MealDate? Date { get; set; }
     }
+    public class AttendanceRequestDto
+    {
+        public string Name { get; set; }
+        public bool Present { get; set; }
+    }
 }

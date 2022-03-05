@@ -4,14 +4,20 @@ namespace Rollcall.Services
 {
     public class SchemaService
     {
-        static private readonly Dictionary<string, int> _schemas = new Dictionary<string, int>{
-            {"breakfast",0},
-            {"dinner",1},
-            {"desert",2},
-        };
-        public Dictionary<string, int> GetSchemas()
+        private readonly Dictionary<string, int> _mealIdTranslation;
+        private readonly Dictionary<int, string> _idMealTranslation;
+        public SchemaService(IEnumerable<MealSchema> data)
         {
-            return _schemas;
+            _mealIdTranslation = data.ToDictionary(m => m.Name, m => m.Id);
+            _idMealTranslation = data.ToDictionary(m => m.Id, m => m.Name);
+        }
+        public string Translate(int id)
+        {
+            return _idMealTranslation[id];
+        }
+        public int Translate(string name)
+        {
+            return _mealIdTranslation[name];
         }
     }
 }

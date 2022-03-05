@@ -6,8 +6,11 @@ namespace Rollcall.Repositories
 {
     public class GroupAttendanceRepository : AttendanceRepositoryBase, IAttendanceRepository<Group>
     {
-        public GroupAttendanceRepository(RepositoryContext context,
-                                        IMealParserService mealParser) : base(context, mealParser) { }
+        public SchemaService _schemaService;
+        public GroupAttendanceRepository(RepositoryContext context, SchemaService schemaService) : base(context)
+        {
+            _schemaService = schemaService;
+        }
 
         public IEnumerable<AttendanceDto> GetMonthlyAttendance(Group target, int year, int month)
         {
@@ -50,6 +53,18 @@ namespace Rollcall.Repositories
                 Date = new MealDate { Year = year, Month = month, Day = 1 },
                 Attendance = data.ToDictionary(d => d.Name, d => new MealDto { Present = d.Attendance, Masked = d.Masked })
             };
+        }
+        public async Task SetAttendance(Group target, AttendanceRequestDto attendance, int year, int month, int day)
+        {
+            _context.GroupAttendance.Update(new GroupAttendance
+            {
+                GroupId = target.Id,
+                Date = new DateTime(year, month, day),
+                Attendance = attendance.Present,
+                MealId = _schemaService.Translate(attendance.Name)
+            });
+
+            await _context.SaveChangesAsync();
         }
     }
 }

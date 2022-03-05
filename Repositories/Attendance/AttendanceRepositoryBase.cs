@@ -24,11 +24,9 @@ namespace Rollcall.Repositories
     public class AttendanceRepositoryBase
     {
         protected readonly RepositoryContext _context;
-        protected readonly IMealParserService _mealParser;
-        public AttendanceRepositoryBase(RepositoryContext context, IMealParserService mealParser)
+        public AttendanceRepositoryBase(RepositoryContext context)
         {
             _context = context;
-            _mealParser = mealParser;
         }
         protected IEnumerable<AttendanceEntry> GetAttendanceQuery<Q, T>(Func<ChildAttendance, bool> whereCondition,
         Func<DateTime, Q> dateSelector,

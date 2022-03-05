@@ -51,20 +51,20 @@ namespace Rollcall.Controllers
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult<Attendance>> SetAttendance(int childId, int year, int month, int day, [FromBody] Dictionary<string, bool> dto)
+        public async Task<ActionResult<AttendanceDto>> SetAttendance(int childId, int year, int month, int day, [FromBody] Dictionary<string, bool> dto)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)
             {
                 return NotFound();
             }
-            var attendance = new AttendanceData
+            /*var attendance = new AttendanceDto
             {
                 Meals = dto,
                 Date = new MealDate { Year = year, Month = month, Day = day }
             };
-            await _attendanceService.SetAttendance(child, attendance);
-            return Ok(attendance);
+            await _attendanceService.SetAttendance(child, attendance);*/
+            return Ok(null);
         }
     }
 }

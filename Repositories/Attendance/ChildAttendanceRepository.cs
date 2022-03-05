@@ -8,14 +8,10 @@ namespace Rollcall.Repositories
 
     public class ChildAttendanceRepository : AttendanceRepositoryBase, IAttendanceRepository<Child>
     {
-        private readonly IAttendanceParserService _attendanceParser;
-        private readonly IMealParserService _mealParser;
-        public ChildAttendanceRepository(RepositoryContext context,
-        IMealParserService mealParser,
-        IAttendanceParserService attendanceParser) : base(context, mealParser)
+        private readonly SchemaService _schemaService;
+        public ChildAttendanceRepository(RepositoryContext context, SchemaService schemaService) : base(context)
         {
-            _attendanceParser = attendanceParser;
-            _mealParser = mealParser;
+            _schemaService = schemaService;
         }
         public IEnumerable<AttendanceDto> GetMonthlyAttendance(Child target, int year, int month)
         {
@@ -64,6 +60,17 @@ namespace Rollcall.Repositories
                 Date = new MealDate { Year = year, Month = month, Day = day },
                 Attendance = data
             };
+        }
+        public async Task SetAttendance(Child target, AttendanceRequestDto attendance, int year, int month, int day)
+        {
+            _context.ChildAttendance.Update(new ChildAttendance
+            {
+                Date = new DateTime(year, month, day),
+                Attendance = attendance.Present,
+                ChildId = target.Id,
+                MealId = _schemaService.Translate(attendance.Name)
+            });
+            await _context.SaveChangesAsync();
         }
     }
 }

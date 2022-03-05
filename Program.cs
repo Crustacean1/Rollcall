@@ -22,9 +22,6 @@ class Program
         builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<GroupRepository>();
 
-        builder.Services.AddScoped<IMaskRepository<Child>, MaskRepository>();
-        builder.Services.AddScoped<IMaskRepository<Group>, MaskRepository>();
-
         builder.Services.AddScoped<IAttendanceRepository<Child>, ChildAttendanceRepository>();
         builder.Services.AddScoped<IAttendanceRepository<Group>, GroupAttendanceRepository>();
     }
@@ -62,9 +59,12 @@ class Program
     static public void ConfigureServices()
     {
         if (builder == null) { return; }
-        builder.Services.AddSingleton<SchemaService>();
-        builder.Services.AddSingleton<IMealParserService, MealParserService>();
-        builder.Services.AddSingleton<IAttendanceParserService, AttendanceParserService>();
+        builder.Services.AddSingleton<SchemaService>(o =>
+        new SchemaService(new MealSchema[]{
+            new MealSchema{Name ="breakfast", Id = 1},
+            new MealSchema{Name ="dinner", Id = 2},
+            new MealSchema{Name ="desert", Id = 3}})
+        );
 
         builder.Services.AddScoped<DateValidationFilter>();
 
