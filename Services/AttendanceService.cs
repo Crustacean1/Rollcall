@@ -28,5 +28,9 @@ namespace Rollcall.Services
             var meal = _attendanceRepo.GetMonthlySummary(target, year, month);
             return meal;
         }
+        public async Task SetAttendance(T target, AttendanceRequestDto dto, int year, int month, int day)
+        {
+            await _attendanceRepo.SetAttendance(target, dto, year, month, day);
+        }
     }
 }

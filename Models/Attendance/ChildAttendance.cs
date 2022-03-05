@@ -5,6 +5,7 @@ namespace Rollcall.Models
     {
         public Child TargetChild { get; set; }
         public int ChildId { get; set; }
+        [ForeignKey("MealId")]
         public MealSchema Schema { get; set; }
         public int MealId { get; set; }
         public bool Attendance { get; set; }

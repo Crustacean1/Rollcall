@@ -9,12 +9,25 @@ namespace Rollcall.Repositories
     public class AttendanceEntry
     {
         public int ChildId { get; set; }
-        public MealDate Date { get; set; }
         public string Name { get; set; }
         public bool Masked { get; set; }
         public int Attendance { get; set; }
+        public MealDate Date { get; set; }
     }
+    public class AttendanceEntity
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+        public int Day { get; set; }
 
+        public int MealId { get; set; }
+        public int ChildId { get; set; }
+        public int GroupId { get; set; }
+
+        public bool Masked { get; set; }
+        public bool Attendance { get; set; }
+        public string MealName { get; set; }
+    }
     public class AttendanceKey<Q, T>
     {
         public string Name { get; set; }
@@ -28,36 +41,53 @@ namespace Rollcall.Repositories
         {
             _context = context;
         }
-        protected IEnumerable<AttendanceEntry> GetAttendanceQuery<Q, T>(Func<ChildAttendance, bool> whereCondition,
-        Func<DateTime, Q> dateSelector,
-        Func<Child, T> targetSelector,
+        protected IEnumerable<AttendanceEntry> GetAttendanceQuery<Q>(Expression<Func<AttendanceEntity, bool>> whereCondition,
+        Expression<Func<AttendanceEntity, Q>> selector,
         Func<Q, MealDate> dateRetriever,
-        Func<T, int> targetRetriever)
+        Func<Q, int> targetRetriever,
+        Func<Q, string> nameRetriever)
         {
-            var result = _context.Set<ChildAttendance>().AsNoTracking().Select(a => a)
-
-            .Join(_context.Set<GroupAttendance>().AsNoTracking(), c => new { c.MealId, c.Date, c.TargetChild.GroupId },
+            var result = _context.Set<ChildAttendance>().AsNoTracking()
+            .Join(_context.Set<GroupAttendance>().AsNoTracking().DefaultIfEmpty(), c => new { c.MealId, c.Date, c.TargetChild.GroupId },
              g => new { g.MealId, g.Date, g.GroupId },
-             (childAttendance, groupAttendance) => new { childAttendance, groupAttendance })
+             (childAttendance, groupAttendance) => new AttendanceEntity
+             {
+                 MealId = childAttendance.MealId,
+                 ChildId = childAttendance.ChildId,
+                 GroupId = groupAttendance.GroupId,
 
-            .Join(_context.Set<MealSchema>().AsNoTracking(), c => c.childAttendance.MealId, s => s.Id,
-            (attendance, mealSchema) => new { attendance, mealSchema })
+                 Attendance = childAttendance.Attendance,
+                 Masked = groupAttendance?.Attendance ?? false,
 
-            .Where(a => whereCondition(a.attendance.childAttendance))
-
-            .GroupBy(a => new AttendanceKey<Q, T>
+                 Year = childAttendance.Date.Year,
+                 Month = childAttendance.Date.Month,
+                 Day = childAttendance.Date.Day
+             })
+            .Join(_context.Set<MealSchema>().AsNoTracking(), c => c.MealId, s => s.Id,
+            (attendance, mealSchema) => new AttendanceEntity
             {
-                Name = a.mealSchema.Name,
-                t = targetSelector(a.attendance.childAttendance.TargetChild),
-                q = dateSelector(a.attendance.childAttendance.Date)
+                MealId = attendance.MealId,
+                ChildId = attendance.ChildId,
+                GroupId = attendance.GroupId,
+
+                Year = attendance.Year,
+                Month = attendance.Month,
+                Day = attendance.Day,
+
+                Attendance = attendance.Attendance,
+                Masked = attendance.Masked,
+                MealName = mealSchema.Name
             })
+
+            .Where(whereCondition)
+            .GroupBy(selector)
             .Select(a => new AttendanceEntry
             {
-                ChildId = targetRetriever(a.Key.t),
-                Attendance = a.Count(a => a.attendance.childAttendance.Attendance && a.attendance.groupAttendance.Attendance),
-                Date = dateRetriever(a.Key.q),
-                Name = a.Key.Name,
-                Masked = a.Any(a => a.attendance.groupAttendance.Attendance)
+                ChildId = targetRetriever(a.Key),
+                Attendance = a.Count(a => a.Attendance && a.Masked != null && !a.Masked),
+                Name = nameRetriever(a.Key),
+                Masked = a.Count(a => a.Masked) != 0,
+                Date = dateRetriever(a.Key)
             });
             return result;
         }

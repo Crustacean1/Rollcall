@@ -14,7 +14,7 @@ namespace Rollcall.Repositories
 
         public IEnumerable<AttendanceDto> GetMonthlyAttendance(Group target, int year, int month)
         {
-            var data = GetAttendanceQuery(
+            /*var data = GetAttendanceQuery(
             c => (c.Date.Year == year && c.Date.Month == month && c.TargetChild.GroupId == target.Id),
             c => new { c.Date.Day },
             c => new { c.Id },
@@ -24,11 +24,12 @@ namespace Rollcall.Repositories
             {
                 Date = d.Key.Date,
                 Attendance = d.ToDictionary(m => m.Name, m => new MealDto { Present = m.Attendance, Masked = m.Masked })
-            });
+            });*/
+            return new List<AttendanceDto>();
         }
         public AttendanceDto? GetMonthlySummary(Group target, int year, int month)
         {
-            var data = GetAttendanceQuery(
+            /*var data = GetAttendanceQuery(
             c => (c.Date.Year == year && c.Date.Month == month && c.TargetChild.GroupId == target.Id),
             c => new { },
             c => new { },
@@ -38,11 +39,12 @@ namespace Rollcall.Repositories
             {
                 Date = new MealDate { Year = year, Month = month, Day = 1 },
                 Attendance = data.ToDictionary(d => d.Name, d => new MealDto { Present = d.Attendance, Masked = d.Masked })
-            };
+            };*/
+            return new AttendanceDto();
         }
         public AttendanceDto? GetAttendance(Group target, int year, int month, int day)
         {
-            var data = GetAttendanceQuery(
+            /*var data = GetAttendanceQuery(
             c => (c.Date.Year == year && c.Date.Month == month && c.Date.Day == day && c.TargetChild.GroupId == target.Id),
             c => new { },
             c => new { },
@@ -52,11 +54,12 @@ namespace Rollcall.Repositories
             {
                 Date = new MealDate { Year = year, Month = month, Day = 1 },
                 Attendance = data.ToDictionary(d => d.Name, d => new MealDto { Present = d.Attendance, Masked = d.Masked })
-            };
+            };*/
+            return new AttendanceDto();
         }
         public async Task SetAttendance(Group target, AttendanceRequestDto attendance, int year, int month, int day)
         {
-            _context.GroupAttendance.Update(new GroupAttendance
+            _context.GroupAttendance.Add(new GroupAttendance
             {
                 GroupId = target.Id,
                 Date = new DateTime(year, month, day),

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 using Rollcall.Models;
@@ -15,13 +16,14 @@ namespace Rollcall.Repositories
         }
         public IEnumerable<AttendanceDto> GetMonthlyAttendance(Child target, int year, int month)
         {
+            Expression<Func<AttendanceEntity, bool>> where = (e) => (e.Year == year && e.Month == month && e.ChildId == target.Id);
             var entries = GetAttendanceQuery(
-                c => (c.Date.Year == year && c.Date.Month == month && c.ChildId == target.Id),
-                c => new { c.Date.Day },
-                c => new { },
+                where,
+                c => new { c.Day, c.MealName },
                 c => new MealDate { Year = year, Month = month, Day = c.Day },
-                c => target.Id
-            );
+                c => target.Id,
+                c => c.MealName
+            ).ToList();
             var data = entries.GroupBy(e => e.Date.Day).Select(
                 d => new AttendanceDto
                 {
@@ -33,7 +35,7 @@ namespace Rollcall.Repositories
         }
         public AttendanceDto? GetMonthlySummary(Child target, int year, int month)
         {
-            var data = GetAttendanceQuery(
+            /*var data = GetAttendanceQuery(
                 c => (c.Date.Year == year && c.Date.Month == month && c.ChildId == target.Id),
                 c => new { },
                 c => new { },
@@ -44,11 +46,12 @@ namespace Rollcall.Repositories
             {
                 Date = new MealDate { Year = year, Month = month, Day = 1 },
                 Attendance = data
-            };
+            };*/
+            return new AttendanceDto();
         }
         public AttendanceDto? GetAttendance(Child target, int year, int month, int day)
         {
-            var data = GetAttendanceQuery(
+            /*var data = GetAttendanceQuery(
                 c => (c.Date.Year == year && c.Date.Month == month && c.Date.Day == day && c.ChildId == target.Id),
                 c => new { },
                 c => new { },
@@ -59,11 +62,12 @@ namespace Rollcall.Repositories
             {
                 Date = new MealDate { Year = year, Month = month, Day = day },
                 Attendance = data
-            };
+            };*/
+            return new AttendanceDto();
         }
         public async Task SetAttendance(Child target, AttendanceRequestDto attendance, int year, int month, int day)
         {
-            _context.ChildAttendance.Update(new ChildAttendance
+            _context.ChildAttendance.Add(new ChildAttendance
             {
                 Date = new DateTime(year, month, day),
                 Attendance = attendance.Present,
