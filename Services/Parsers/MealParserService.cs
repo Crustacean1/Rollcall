@@ -1,8 +1,8 @@
 namespace Rollcall.Services
 {
-    public class AttendanceParserService : IAttendanceParserService
+    public class MealParserService : IMealParserService
     {
-        protected readonly ILogger<AttendanceParserService> _logger;
+        protected readonly ILogger<MealParserService> _logger;
         protected readonly Dictionary<string, int> _schemas;
         private uint AddMeal(uint meal, uint mealMask, bool value)
         {
@@ -18,12 +18,12 @@ namespace Rollcall.Services
         {
             return (mealData >> mealId) & 1;
         }
-        public AttendanceParserService(SchemaService schemaService, ILogger<AttendanceParserService> logger)
+        public MealParserService(SchemaService schemaService, ILogger<MealParserService> logger)
         {
             _logger = logger;
             _schemas = schemaService.GetSchemas();
         }
-        public uint Marshall(Dictionary<string, bool>? meals)
+        public uint Parse(Dictionary<string, bool>? meals)
         {
             if (meals == null) { throw new InvalidDataException("In AttendanceParserService::MealsToInt(): parameters cannot be null"); }
             uint mealData = 0;
@@ -37,12 +37,22 @@ namespace Rollcall.Services
             }
             return mealData;
         }
-        public Dictionary<string, bool> Parse(uint mealData)
+        
+        public Dictionary<string, bool> MarshallMask(uint mealData)
         {
             var meals = new Dictionary<string, bool>();
             foreach (var schema in _schemas)
             {
                 meals.Add(schema.Key, GetMealAttendance(mealData, schema.Value) == 1u);
+            }
+            return meals;
+        }
+        public Dictionary<string, uint> MarshallMeal(uint mealData)
+        {
+            var meals = new Dictionary<string, uint>();
+            foreach (var schema in _schemas)
+            {
+                meals.Add(schema.Key, GetMealAttendance(mealData, schema.Value));
             }
             return meals;
         }

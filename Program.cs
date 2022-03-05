@@ -1,5 +1,6 @@
 using Rollcall.Repositories;
 using Rollcall.Services;
+using Rollcall.Models;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,11 +18,15 @@ class Program
         {
             options.UseMySql(sqlConnectionString, ServerVersion.AutoDetect(sqlConnectionString));
         });
+        builder.Services.AddScoped<ChildRepository>();
         builder.Services.AddScoped<UserRepository>();
-        builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-        builder.Services.AddScoped<IChildRepository, ChildRepository>();
-        builder.Services.AddScoped<AttendanceRepository>();
-        builder.Services.AddScoped<MaskRepository>();
+        builder.Services.AddScoped<GroupRepository>();
+
+        builder.Services.AddScoped<IMaskRepository<Child>, MaskRepository>();
+        builder.Services.AddScoped<IMaskRepository<Group>, MaskRepository>();
+
+        builder.Services.AddScoped<IAttendanceRepository<Child>, ChildAttendanceRepository>();
+        builder.Services.AddScoped<IAttendanceRepository<Group>, GroupAttendanceRepository>();
     }
     static private void ConfigureAuthentication()
     {
@@ -58,12 +63,13 @@ class Program
     {
         if (builder == null) { return; }
         builder.Services.AddSingleton<SchemaService>();
+        builder.Services.AddSingleton<IMealParserService, MealParserService>();
         builder.Services.AddSingleton<IAttendanceParserService, AttendanceParserService>();
 
-        builder.Services.AddScoped<ChildHandlerService>();
-        builder.Services.AddScoped<MaskHandlerService>();
         builder.Services.AddScoped<DateValidationFilter>();
-        builder.Services.AddScoped<AttendanceHandlerService>();
+
+        builder.Services.AddScoped<AttendanceService<Child>>();
+        builder.Services.AddScoped<AttendanceService<Group>>();
     }
     static public void Main(String[] args)
     {

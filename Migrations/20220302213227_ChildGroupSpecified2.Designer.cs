@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rollcall.Repositories;
 
@@ -10,9 +11,10 @@ using Rollcall.Repositories;
 namespace rollcall.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    partial class RepositoryContextModelSnapshot : ModelSnapshot
+    [Migration("20220302213227_ChildGroupSpecified2")]
+    partial class ChildGroupSpecified2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,6 +49,9 @@ namespace rollcall.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("GroupId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
@@ -56,6 +61,8 @@ namespace rollcall.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("GroupId1");
 
                     b.ToTable("Children");
 
@@ -175,10 +182,14 @@ namespace rollcall.Migrations
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
                     b.HasOne("Rollcall.Models.Group", "MyGroup")
-                        .WithMany("Children")
+                        .WithMany()
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Rollcall.Models.Group", null)
+                        .WithMany("Children")
+                        .HasForeignKey("GroupId1");
 
                     b.Navigation("MyGroup");
                 });

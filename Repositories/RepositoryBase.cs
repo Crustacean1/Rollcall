@@ -1,10 +1,16 @@
-namespace Rollcall.Repositories{
-    public class RepositoryBase{
+namespace Rollcall.Repositories
+{
+    public class RepositoryBase
+    {
         protected readonly RepositoryContext _context;
-        public RepositoryBase(RepositoryContext context){
+        public RepositoryBase(RepositoryContext context)
+        {
             _context = context;
         }
-        public void SaveChanges(){_context.SaveChanges();}
-        public async Task SaveChangesAsync(){await _context.SaveChangesAsync();}
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -3,6 +3,6 @@ namespace Rollcall.Models{
         public string Name{get;set;}
         public int Id{get;set;}
         public IEnumerable<Child>? Children{get;set;}
-        public IEnumerable<Mask>? Masks{get;set;}
+        public IEnumerable<GroupAttendance>? Masks{get;set;}
     }
 }

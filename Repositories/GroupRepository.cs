@@ -3,7 +3,7 @@ using Rollcall.Models;
 
 namespace Rollcall.Repositories
 {
-    public class GroupRepository : RepositoryBase, IGroupRepository
+    public class GroupRepository : RepositoryBase 
     {
         public GroupRepository(RepositoryContext context) : base(context) { }
         public IEnumerable<Group> GetGroups(bool track = false)

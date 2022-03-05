@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations.Schema;
 namespace Rollcall.Models
 {
-    public class Attendance
+    public class ChildAttendance
     {
-        public int ChildId { get; set; }
         public Child TargetChild { get; set; }
-        public uint Meals { get; set; }
+        public int ChildId { get; set; }
+        public MealSchema Schema { get; set; }
+        public int MealId { get; set; }
+        public bool Attendance { get; set; }
         [Column(TypeName = "date")]
         public DateTime Date { get; set; }
     }

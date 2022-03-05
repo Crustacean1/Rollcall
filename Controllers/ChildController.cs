@@ -11,18 +11,39 @@ namespace Rollcall.Controllers
     [Route("[controller]")]
     public class ChildController : ControllerBase
     {
-        private readonly IChildRepository _childRepository;
-        private readonly IGroupRepository _groupRepository;
-        private readonly ChildHandlerService _childService;
+        private readonly ChildRepository _childRepository;
+        private readonly IMealParserService _mealParser;
         private readonly ILogger<ChildController> _logger;
 
-        public ChildController(ILogger<ChildController> logger, IChildRepository childRepository,
-         IGroupRepository groupRepository, ChildHandlerService childService)
+        private Child Parse(ChildDto dto)
+        {
+            return new Child
+            {
+                Name = dto.Name,
+                Surname = dto.Surname,
+                DefaultMeals = _mealParser.Parse(dto.DefaultAttendance),
+                GroupId = dto.GroupId,
+            };
+        }
+        private ChildDto Marshall(Child child)
+        {
+            return new ChildDto
+            {
+                GroupName = child.MyGroup.Name,
+                Name = child.Name,
+                Surname = child.Surname,
+                DefaultAttendance = _mealParser.Marshall(child.DefaultMeals),
+                GroupId = child.GroupId,
+                Id = child.Id
+            };
+        }
+
+        public ChildController(ILogger<ChildController> logger, ChildRepository childRepository,
+         GroupRepository groupRepository, IMealParserService mealParser)
         {
             _logger = logger;
             _childRepository = childRepository;
-            _groupRepository = groupRepository;
-            _childService = childService;
+            _mealParser = mealParser;
         }
 
         [HttpGet, Authorize]
@@ -34,7 +55,7 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-            return Ok(_childService.ToDto(child));
+            return Ok(Marshall(child));
         }
 
         [HttpGet, Authorize]
@@ -44,23 +65,22 @@ namespace Rollcall.Controllers
             ICollection<Child> children;
             children = _childRepository.GetChildrenByGroup(groupId);
 
-            return Ok(children.Select(child => _childService.ToDto(child)).ToList());
+            return Ok(children.Select(child => Marshall(child)).ToList());
         }
 
         [HttpGet, Authorize]
         public ActionResult<ICollection<ChildDto>> GetChildren()
         {
-            ICollection<Child> children;
-            children = _childRepository.GetChildrenByGroup();
+            var children = _childRepository.GetChildrenByGroup().ToList();
 
-            return Ok(children.Select(child => _childService.ToDto(child)).ToList());
+            return Ok(children.Select(child => Marshall(child)).ToList());
         }
 
         [HttpPost, Authorize]
         public async Task<ActionResult> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
         {
             _logger.LogInformation("Adding children");
-            var children = childrenDto.Select(e => _childService.FromDto(e));
+            var children = childrenDto.Select(e => Parse(e));
             _childRepository.AddChildren(children);
             await _childRepository.SaveChangesAsync();
             return Ok();

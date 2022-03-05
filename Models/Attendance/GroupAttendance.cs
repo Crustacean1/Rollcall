@@ -2,11 +2,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Rollcall.Models
 {
-    public class Mask
+    public class GroupAttendance
     {
-        public Group MaskedGroup { get; set; }
-        public uint Meals { get; set; }
+
+        public Group TargetGroup { get; set; }
         public int GroupId { get; set; }
+        public MealSchema Schema { get; set; }
+        public int MealId { get; set; }
+        public bool Attendance { get; set; }
 
         [Column(TypeName = "date")]
         public DateTime Date { get; set; }
