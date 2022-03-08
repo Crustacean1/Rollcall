@@ -9,71 +9,58 @@ namespace Rollcall.Repositories
 
     public class ChildAttendanceRepository : AttendanceRepositoryBase, IAttendanceRepository<Child>
     {
-        private readonly SchemaService _schemaService;
-        public ChildAttendanceRepository(RepositoryContext context, SchemaService schemaService) : base(context)
+        private readonly ILogger<ChildAttendanceRepository> _logger;
+        public ChildAttendanceRepository(RepositoryContext context, ILogger<ChildAttendanceRepository> logger) : base(context)
         {
-            _schemaService = schemaService;
+            _logger = logger;
         }
-        public IEnumerable<AttendanceDto> GetMonthlyAttendance(Child target, int year, int month)
+        public IEnumerable<AttendanceEntity> GetMonthlyAttendance(Child target, int year, int month)
         {
-            Expression<Func<AttendanceEntity, bool>> where = (e) => (e.Year == year && e.Month == month && e.ChildId == target.Id);
-            var entries = GetAttendanceQuery(
-                where,
-                c => new { c.Day, c.MealName },
-                c => new MealDate { Year = year, Month = month, Day = c.Day },
-                c => target.Id,
+            Expression<Func<ChildAttendance, bool>> targetCondition = c => c.ChildId == target.Id;
+            Expression<Func<AttendanceEntry, bool>> dateCondition = a => a.Year == year && a.Month == month;
+            var result = GetAttendanceQuery(targetCondition, dateCondition);
+            return result;
+        }
+        public IEnumerable<AttendanceEntity> GetMonthlySummary(Child target, int year, int month)
+        {
+            Expression<Func<AttendanceEntry, bool>> dateCondition = (e) => (e.Year == year && e.Month == month);
+            Expression<Func<Child, bool>> childCondition = (e) => (e.Id == target.Id);
+            var childAttendance = GetSummaryQuery(
+                childCondition,
+                dateCondition,
+                c => new { c.MealName },
+                c => new MealDate { Year = year, Month = month, Day = 0 },
                 c => c.MealName
-            ).ToList();
-            var data = entries.GroupBy(e => e.Date.Day).Select(
-                d => new AttendanceDto
-                {
-                    Attendance = d.ToDictionary(d => d.Name, d => new MealDto { Present = d.Attendance, Masked = d.Masked }),
-                    Date = new MealDate { Year = year, Month = month, Day = d.Key }
-                }
             );
-            return data;
+
+            return childAttendance;
         }
-        public AttendanceDto? GetMonthlySummary(Child target, int year, int month)
+        public IEnumerable<AttendanceEntity> GetAttendance(Child target, int year, int month, int day)
         {
-            /*var data = GetAttendanceQuery(
-                c => (c.Date.Year == year && c.Date.Month == month && c.ChildId == target.Id),
-                c => new { },
-                c => new { },
-                c => new MealDate { Year = year, Month = month, Day = 1 },
-                c => target.Id
-            ).ToDictionary(e => e.Name, e => new MealDto { Present = e.Attendance, Masked = e.Masked });
-            return new AttendanceDto
-            {
-                Date = new MealDate { Year = year, Month = month, Day = 1 },
-                Attendance = data
-            };*/
-            return new AttendanceDto();
+            Expression<Func<ChildAttendance, bool>> targetCondition = c => c.ChildId == target.Id;
+            Expression<Func<AttendanceEntry, bool>> dateCondition = a => a.Year == year && a.Month == month && a.Day == day;
+            var result = GetAttendanceQuery(targetCondition, dateCondition);
+            return result;
         }
-        public AttendanceDto? GetAttendance(Child target, int year, int month, int day)
+        public async Task SetAttendance(Child target, int mealId, bool attendance, int year, int month, int day)
         {
-            /*var data = GetAttendanceQuery(
-                c => (c.Date.Year == year && c.Date.Month == month && c.Date.Day == day && c.ChildId == target.Id),
-                c => new { },
-                c => new { },
-                c => new MealDate { Year = year, Month = month, Day = day },
-                c => target.Id
-            ).ToDictionary(e => e.Name, e => new MealDto { Present = e.Attendance, Masked = e.Masked });
-            return new AttendanceDto
+            var previousAttendance = _context.Set<ChildAttendance>()
+            .Where(c => c.ChildId == target.Id && c.Date == new DateTime(year, month, day) && c.MealId == mealId)
+            .FirstOrDefault();
+            if (previousAttendance != null)
             {
-                Date = new MealDate { Year = year, Month = month, Day = day },
-                Attendance = data
-            };*/
-            return new AttendanceDto();
-        }
-        public async Task SetAttendance(Child target, AttendanceRequestDto attendance, int year, int month, int day)
-        {
-            _context.ChildAttendance.Add(new ChildAttendance
+                previousAttendance.Attendance = attendance;
+            }
+            else
             {
-                Date = new DateTime(year, month, day),
-                Attendance = attendance.Present,
-                ChildId = target.Id,
-                MealId = _schemaService.Translate(attendance.Name)
-            });
+                _context.ChildAttendance.Add(new ChildAttendance
+                {
+                    Date = new DateTime(year, month, day),
+                    Attendance = attendance,
+                    ChildId = target.Id,
+                    MealId = mealId
+                });
+            }
             await _context.SaveChangesAsync();
         }
     }

@@ -2,7 +2,7 @@ namespace Rollcall.Models
 {
     public class MealDto
     {
-        public int Present { get; set; }
+        public int Attendance { get; set; }
         public bool Masked { get; set; }
     }
 }

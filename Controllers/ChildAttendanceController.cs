@@ -8,7 +8,7 @@ using Rollcall.Services;
 namespace Rollcall.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("attendance/child")]
     public class ChildAttendanceController : ControllerBase
     {
         private readonly ILogger<ChildAttendanceController> _logger;
@@ -24,7 +24,21 @@ namespace Rollcall.Controllers
         }
 
         [HttpGet, Authorize]
-        [Route("{childId}/{year}/{month}")]
+        [Route("summary/{childId}/{year}/{month}")]
+        [ServiceFilter(typeof(DateValidationFilter))]
+        public ActionResult<AttendanceDto> GetMonthlySummary(int childId, int year, int month)
+        {
+            var child = _childRepo.GetChild(childId);
+            if (child == null)
+            {
+                return NotFound();
+            }
+            var result = _attendanceService.GetMonthlySummary(child, year, month);
+            return Ok(result);
+        }
+
+        [HttpGet, Authorize]
+        [Route("daily/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<List<AttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
@@ -33,10 +47,11 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-            return Ok(_attendanceService.GetMonthlyAttendance(child, year, month));
+            var result = _attendanceService.GetMonthlyAttendance(child, year, month);
+            return Ok(result);
         }
         [HttpGet, Authorize]
-        [Route("{childId}/{year}/{month}/{day}")]
+        [Route("daily/{childId}/{year}/{month}/{day}")]
         public ActionResult<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
             var child = _childRepo.GetChild(childId);
@@ -46,7 +61,6 @@ namespace Rollcall.Controllers
             }
             return Ok(_attendanceService.GetAttendance(child, year, month, day));
         }
-
 
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]

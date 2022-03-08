@@ -31,7 +31,7 @@ namespace Rollcall.Services
             {
                 return null;
             }
-            if (GetPasswordHash(userCred.Password, toRawSalt(user.PasswordSalt)) == user.PasswordHash)
+            if (GetPasswordHash(userCred.Password, ToRawSalt(user.PasswordSalt)) == user.PasswordHash)
             {
                 return _issuerService.createToken(user);
             }
@@ -43,7 +43,7 @@ namespace Rollcall.Services
             User user = new User
             {
                 Login = userDto.Login,
-                PasswordHash = GetPasswordHash(userDto.Password, toRawSalt(salt)),
+                PasswordHash = GetPasswordHash(userDto.Password, ToRawSalt(salt)),
                 PasswordSalt = salt
             };
             _repository.AddUser(user);
@@ -60,9 +60,9 @@ namespace Rollcall.Services
             {
                 rng.GetNonZeroBytes(salt);
             }
-            return toCleanSalt(salt);
+            return ToCleanSalt(salt);
         }
-        private string toCleanSalt(byte[] salt) { return Convert.ToBase64String(salt); }
-        private byte[] toRawSalt(string salt) { return Convert.FromBase64String(salt); }
+        private string ToCleanSalt(byte[] salt) { return Convert.ToBase64String(salt); }
+        private byte[] ToRawSalt(string salt) { return Convert.FromBase64String(salt); }
     }
 }
