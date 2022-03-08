@@ -9,6 +9,8 @@ namespace Rollcall.Services
         private readonly IMaskRepository<T> _maskRepo;
         private readonly ILogger<AttendanceService<T>> _logger;
         private readonly SchemaService _schemaService;
+        private readonly DayAttendanceDto _defaultDay;
+        private readonly AttendanceSummaryDto _defaultSummary;
         public AttendanceService(ILogger<AttendanceService<T>> logger, IAttendanceRepository<T> attendanceRepo,
         IMaskRepository<T> maskRepo, SchemaService schemaService)
         {
@@ -16,82 +18,100 @@ namespace Rollcall.Services
             _attendanceRepo = attendanceRepo;
             _maskRepo = maskRepo;
             _schemaService = schemaService;
+            _defaultDay = CreateDefaultDayAttendance();
+            _defaultSummary = CreateDefaultSummary();
         }
-        public AttendanceDto? GetAttendance(T target, int year, int month, int day)
+        public DayAttendanceDto? GetAttendance(T target, int year, int month, int day)
         {
-            var summary = _attendanceRepo.GetAttendance(target, year, month, day);
-            return new AttendanceDto
+            var attendance = _attendanceRepo.GetAttendance(target, year, month, day);
+            var masks = _maskRepo.GetDailyMask(target, year, month, day);
+            var result = new DayAttendanceDto(_defaultDay);
+            foreach (var meal in attendance)
             {
-                Attendance = ParseDayToDict(summary),
-                Date = new MealDate { Year = year, Month = month, Day = day }
-            };
+                SetAttendance(result, meal);
+            }
+            foreach (var mask in masks)
+            {
+                SetMask(result, mask);
+            }
+            return result;
         }
-        public Dictionary<int, Dictionary<string, MealDto>> GetMonthlyAttendance(T target, int year, int month)
+        public MonthlyAttendanceDto GetMonthlyAttendance(T target, int year, int month)
         {
             _logger.LogInformation("Getting monthly attendance");
             var meals = _attendanceRepo.GetMonthlyAttendance(target, year, month).ToList();
             var masks = _maskRepo.GetMonthlyMasks(target, year, month);
-
-            var attendance = FullJoin(meals, masks);
-            var parsedMeals = attendance
-            .GroupBy(m => new { m.Date.Day, m.Name })
-            .Select(a => new AttendanceDto
+            var days = CreateMonthlyAttendance(year, month, meals, masks);
+            return new MonthlyAttendanceDto
             {
-                Date = new MealDate { Year = year, Month = month, Day = a.Key.Day },
-                Attendance = ParseDayToDict(a)
-            });
-            return ParseDayToMonth(parsedMeals);
-        }
-        public AttendanceDto? GetMonthlySummary(T target, int year, int month)
-        {
-            var meal = _attendanceRepo.GetMonthlySummary(target, year, month).Select();
-            return new AttendanceSummaryDto
-            {
-                Attendance = ParseDayToDict(meal),
+                Days = days
             };
+        }
+        public AttendanceSummaryDto GetMonthlySummary(T target, int year, int month)
+        {
+            var allMealSummary = _attendanceRepo.GetMonthlySummary(target, year, month);
+            var result = new AttendanceSummaryDto(_defaultSummary);
+            foreach (var mealSummary in allMealSummary)
+            {
+                result.Meals[mealSummary.Name] = mealSummary.Attendance;
+            }
+            return result;
         }
         public async Task SetAttendance(T target, AttendanceRequestDto dto, int year, int month, int day)
         {
             await _attendanceRepo.SetAttendance(target, _schemaService.Translate(dto.Name), dto.Present, year, month, day);
         }
-        private Dictionary<string, MealDto> ParseDayToDict(IEnumerable<FullAttendanceEntity> attendance)
+        public AttendanceSummaryDto CreateDefaultSummary()
         {
-            return attendance.ToDictionary(c => c.Name, c => new MealDto { Attendance = c.Attendance, Masked = false });
-        }
-        private Dictionary<int, Dictionary<string, MealDto>> ParseDayToMonth(IEnumerable<AttendanceDto> attendance)
-        {
-            return attendance.ToDictionary(a => a.Date.Day, a => a.Attendance);
-        }
-        private IEnumerable<FullAttendanceEntity> FullJoin(IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
-        {
-            var leftJoin = attendance.SelectMany(a => masks.Where(m => a.Name == m.Name && a.Date.Day == m.Date.Day).DefaultIfEmpty(), (a, m) => new FullAttendanceEntity
+            var result = new Dictionary<string, int>();
+            var keys = _schemaService.GetNames();
+            foreach (var name in keys)
             {
-                Masked = m == null ? false : m.Attendance,
-                Attendance = a.Attendance,
-                Name = a.Name,
-                Date = a.Date
-            });
-            var rightJoin = masks.SelectMany(m => attendance.Where(a => a.Name == m.Name && a.Date.Day == m.Date.Day).DefaultIfEmpty(), (m, a) => new FullAttendanceEntity
+                result[name] = 0;
+            }
+            return new AttendanceSummaryDto
             {
-                Masked = m.Attendance,
-                Attendance = a == null ? 0 : a.Attendance,
-                Name = m.Name,
-                Date = m.Date
-            });
-            return leftJoin.Union(rightJoin);
+                Meals = result
+            };
         }
-    }
-    class FullAttendanceEntity : IEquatable<FullAttendanceEntity>
-    {
-        public bool Masked { get; set; }
-        public int Attendance { get; set; }
-        public MealDate Date { get; set; }
-        public string Name { get; set; }
-
-        public bool Equals(FullAttendanceEntity b)
+        public DayAttendanceDto CreateDefaultDayAttendance()
         {
-            if (b.Date == null) { return false; }
-            return Date.Day == b.Date.Day && Name == b.Name;
+            var result = new Dictionary<string, MealAttendanceDto>();
+            var keys = _schemaService.GetNames();
+            foreach (var name in keys)
+            {
+                result[name] = new MealAttendanceDto { Attendance = 0, Masked = false };
+            }
+            return new DayAttendanceDto
+            {
+                Meals = result
+            };
+        }
+        public void SetAttendance(DayAttendanceDto day, AttendanceEntity meal)
+        {
+            day.Meals[meal.Name].Attendance = meal.Attendance;
+        }
+        public void SetMask(DayAttendanceDto day, MaskEntity mask)
+        {
+            day.Meals[mask.Name].Masked = mask.Attendance;
+        }
+        public List<DayAttendanceDto> CreateMonthlyAttendance(int year, int month, IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
+        {
+            var monthAttendance = new List<DayAttendanceDto>();
+            var daysInMonth = DateTime.DaysInMonth(year, month);
+            for (int i = 0; i < daysInMonth; ++i)
+            {
+                monthAttendance.Add(new DayAttendanceDto(_defaultDay));
+            }
+            foreach (var meal in attendance)
+            {
+                SetAttendance(monthAttendance[meal.Date.Day - 1], meal);
+            }
+            foreach (var mask in masks)
+            {
+                SetMask(monthAttendance[mask.Date.Day - 1], mask);
+            }
+            return monthAttendance;
         }
     }
 }

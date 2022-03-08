@@ -26,7 +26,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("summary/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<AttendanceDto> GetMonthlySummary(int childId, int year, int month)
+        public ActionResult<AttendanceSummaryDto> GetMonthlySummary(int childId, int year, int month)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)
@@ -40,7 +40,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<AttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
+        public ActionResult<List<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)
@@ -52,7 +52,7 @@ namespace Rollcall.Controllers
         }
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}/{day}")]
-        public ActionResult<AttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
+        public ActionResult<DayAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)
@@ -65,7 +65,7 @@ namespace Rollcall.Controllers
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult<AttendanceDto>> SetAttendance(int childId, int year, int month, int day, [FromBody] AttendanceRequestDto dto)
+        public async Task<ActionResult<DayAttendanceDto>> SetAttendance(int childId, int year, int month, int day, [FromBody] AttendanceRequestDto dto)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)

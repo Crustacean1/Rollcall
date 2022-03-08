@@ -72,7 +72,7 @@ class Program
         builder.Services.AddScoped<DateValidationFilter>();
 
         builder.Services.AddScoped<AttendanceService<Child>>();
-        //builder.Services.AddScoped<AttendanceService<Group>>();
+        builder.Services.AddScoped<AttendanceService<Group>>();
     }
     static public void Main(String[] args)
     {

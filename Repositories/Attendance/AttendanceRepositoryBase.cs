@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Rollcall.Models;
-using Rollcall.Services;
 
 namespace Rollcall.Repositories
 {
@@ -26,6 +25,7 @@ namespace Rollcall.Repositories
     public class AttendanceRepositoryBase
     {
         protected readonly RepositoryContext _context;
+
         public AttendanceRepositoryBase(RepositoryContext context)
         {
             _context = context;
@@ -53,13 +53,9 @@ namespace Rollcall.Repositories
                         });
             return result;
         }
-        protected IEnumerable<AttendanceEntity> GetSummaryQuery<Q>(Expression<Func<Child, bool>> childCondition,
-        Expression<Func<AttendanceEntry, bool>> dateCondition,
-        Expression<Func<AttendanceEntry, Q>> grouper,
-        Func<Q, MealDate> getDate,
-        Func<Q, string> getName)
+        private IQueryable<AttendanceEntry> GetSummaryQueryBase(Expression<Func<Child, bool>> childCondition, Expression<Func<AttendanceEntry, bool>> dateCondition)
         {
-            var fullAttendance = from children in _context.Set<Child>().AsNoTracking().Where(a => a.Id == 1)
+            var fullAttendance = from children in _context.Set<Child>().AsNoTracking().Where(childCondition)
                                  join childAttendance in _context.Set<ChildAttendance>().AsNoTracking() on children.Id equals childAttendance.ChildId
                                  join sparseGroupAttendance in _context.Set<GroupAttendance>().AsNoTracking() on
                                     new { children.GroupId, childAttendance.Date, childAttendance.MealId }
@@ -77,7 +73,33 @@ namespace Rollcall.Repositories
                                      Month = childAttendance.Date.Month,
                                      Day = childAttendance.Date.Day,
                                  };
-            var result = fullAttendance.Where(dateCondition)
+            return fullAttendance.Where(dateCondition);
+        }
+
+        protected IEnumerable<AttendanceEntity> GetUnmaskedSummary<Q>(Expression<Func<Child, bool>> childCondition,
+        Expression<Func<AttendanceEntry, bool>> dateCondition,
+        Expression<Func<AttendanceEntry, Q>> grouper,
+        Func<Q, MealDate> getDate,
+        Func<Q, string> getName)
+        {
+            var baseQuery = GetSummaryQueryBase(childCondition, dateCondition);
+            return baseQuery
+            .GroupBy(grouper)
+            .Select(a => new AttendanceEntity
+            {
+                Attendance = a.Count(a => a.Attendance),
+                Date = getDate(a.Key),
+                Name = getName(a.Key)
+            });
+        }
+        protected IEnumerable<AttendanceEntity> GetMaskedSummary<Q>(Expression<Func<Child, bool>> childCondition,
+        Expression<Func<AttendanceEntry, bool>> dateCondition,
+        Expression<Func<AttendanceEntry, Q>> grouper,
+        Func<Q, MealDate> getDate,
+        Func<Q, string> getName)
+        {
+            var baseQuery = GetSummaryQueryBase(childCondition, dateCondition);
+            return baseQuery
             .GroupBy(grouper)
             .Select(a => new AttendanceEntity
             {
@@ -85,7 +107,6 @@ namespace Rollcall.Repositories
                 Date = getDate(a.Key),
                 Name = getName(a.Key)
             });
-            return result;
         }
     }
 }

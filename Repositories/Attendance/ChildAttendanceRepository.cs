@@ -25,7 +25,7 @@ namespace Rollcall.Repositories
         {
             Expression<Func<AttendanceEntry, bool>> dateCondition = (e) => (e.Year == year && e.Month == month);
             Expression<Func<Child, bool>> childCondition = (e) => (e.Id == target.Id);
-            var childAttendance = GetSummaryQuery(
+            var childAttendance = GetUnmaskedSummary(
                 childCondition,
                 dateCondition,
                 c => new { c.MealName },

@@ -6,12 +6,12 @@ namespace Rollcall.Repositories
 {
     public class GroupAttendanceRepository : AttendanceRepositoryBase, IAttendanceRepository<Group>
     {
-        public GroupAttendanceRepository(RepositoryContext context) : base(context){}
+        public GroupAttendanceRepository(RepositoryContext context) : base(context) { }
         public IEnumerable<AttendanceEntity> GetMonthlyAttendance(Group target, int year, int month)
         {
             Expression<Func<Child, bool>> groupCondition = (c) => c.GroupId == target.Id;
             Expression<Func<AttendanceEntry, bool>> dateCondition = a => a.Year == year && a.Month == month;
-            var result = GetSummaryQuery(groupCondition,
+            var result = GetUnmaskedSummary(groupCondition,
             dateCondition,
             c => new { c.Day, c.MealName },
             c => new MealDate { Year = year, Month = month, Day = c.Day },
@@ -22,7 +22,7 @@ namespace Rollcall.Repositories
         {
             Expression<Func<Child, bool>> groupCondition = c => c.GroupId == target.Id;
             Expression<Func<AttendanceEntry, bool>> dateCondition = c => c.Year == year && c.Month == month;
-            var result = GetSummaryQuery(groupCondition,
+            var result = GetMaskedSummary(groupCondition,
             dateCondition,
             c => c.MealName,
             c => new MealDate { Year = year, Month = month, Day = 0 },
@@ -33,7 +33,7 @@ namespace Rollcall.Repositories
         {
             Expression<Func<Child, bool>> groupCondition = c => c.GroupId == target.Id;
             Expression<Func<AttendanceEntry, bool>> dateCondition = c => c.Year == year && c.Month == month && c.Day == day;
-            var result = GetSummaryQuery(groupCondition,
+            var result = GetUnmaskedSummary(groupCondition,
             dateCondition,
             c => c.MealName,
             c => new MealDate { Year = year, Month = month, Day = day },

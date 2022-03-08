@@ -7,7 +7,7 @@ using Rollcall.Models;
 namespace Rollcall.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("attendance/group")]
     public class GroupController : ControllerBase
     {
         private readonly GroupRepository _repository;

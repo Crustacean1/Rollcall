@@ -19,5 +19,8 @@ namespace Rollcall.Services
         {
             return _mealIdTranslation[name];
         }
+        public IEnumerable<string> GetNames(){
+            return _mealIdTranslation.Keys;
+        }
     }
 }
