@@ -4,62 +4,97 @@ using Rollcall.Services;
 
 namespace Rollcall.Repositories
 {
-    public class GroupAttendanceRepository : AttendanceRepositoryBase, IAttendanceRepository<Group>
+    public class GroupAttendanceRepository : AttendanceRepositoryBase
     {
         public GroupAttendanceRepository(RepositoryContext context) : base(context) { }
-        public IEnumerable<AttendanceEntity> GetMonthlyAttendance(Group target, int year, int month)
+        public IEnumerable<AttendanceEntity> GetMonthlyAttendance(Group? target, int year, int month)
         {
-            Expression<Func<Child, bool>> groupCondition = (c) => c.GroupId == target.Id;
             Expression<Func<AttendanceEntry, bool>> dateCondition = a => a.Year == year && a.Month == month;
-            var result = GetUnmaskedSummary(groupCondition,
-            dateCondition,
-            c => new { c.Day, c.MealName },
-            c => new MealDate { Year = year, Month = month, Day = c.Day },
-            c => c.MealName);
+
+            var result = GetUnmaskedSummaryQuery(TargetCondition(target),
+            dateCondition)
+            .GroupBy(a => new { a.Day, a.MealName })
+            .Select(a => new AttendanceEntity
+            {
+                Attendance = a.Count(m => m.Attendance),
+                Name = a.Key.MealName,
+                Date = new MealDate { Year = year, Month = month, Day = a.Key.Day }
+            });
             return result;
         }
-        public IEnumerable<AttendanceEntity> GetMonthlySummary(Group target, int year, int month)
+        public IEnumerable<AttendanceEntity> GetMonthlySummary(Group? target, int year, int month)
         {
-            Expression<Func<Child, bool>> groupCondition = c => c.GroupId == target.Id;
             Expression<Func<AttendanceEntry, bool>> dateCondition = c => c.Year == year && c.Month == month;
-            var result = GetMaskedSummary(groupCondition,
-            dateCondition,
-            c => c.MealName,
-            c => new MealDate { Year = year, Month = month, Day = 0 },
-            c => c);
+
+            var result = GetMaskedSummaryQuery(TargetCondition(target), dateCondition)
+            .GroupBy(a => a.MealName)
+            .Select(a => new AttendanceEntity
+            {
+                Attendance = a.Count(a => a.Attendance && !a.Masked),
+                Name = a.Key,
+                Date = new MealDate { Year = year, Month = month, Day = 0 }
+            });
             return result;
         }
-        public IEnumerable<AttendanceEntity> GetAttendance(Group target, int year, int month, int day)
+        public IEnumerable<AttendanceEntity> GetDailySummary(Group? target, int year, int month, int day)
+        {
+            Expression<Func<AttendanceEntry, bool>> dateCondition = c => c.Year == year && c.Month == month && c.Day == day;
+
+            var result = GetUnmaskedSummaryQuery(TargetCondition(target), dateCondition)
+            .GroupBy(a => a.MealName)
+            .Select(a => new AttendanceEntity
+            {
+                Attendance = a.Count(m => m.Attendance),
+                Name = a.Key,
+                Date = new MealDate { Year = year, Month = month, Day = day }
+            });
+            return result;
+        }
+        public IEnumerable<IEnumerable<AttendanceEntity>> GetDailyAttendance(Group? target, int year, int month, int day)
         {
             Expression<Func<Child, bool>> groupCondition = c => c.GroupId == target.Id;
-            Expression<Func<AttendanceEntry, bool>> dateCondition = c => c.Year == year && c.Month == month && c.Day == day;
-            var result = GetUnmaskedSummary(groupCondition,
-            dateCondition,
-            c => c.MealName,
-            c => new MealDate { Year = year, Month = month, Day = day },
-            c => c);
+            Expression<Func<AttendanceEntry, bool>> dateCondition = a => a.Year == year && a.Month == month && a.Day == day;
+            var result = GetUnmaskedSummaryQuery(TargetCondition(target), dateCondition)
+            .GroupBy(a => a.MealName)
+            .Select(a => a.Select(b => new AttendanceEntity
+            {
+                Attendance = b.Attendance ? 1 : 0,
+                Date = new MealDate { Year = year, Month = month, Day = day },
+                Name = b.MealName
+            }));
             return result;
         }
-        public async Task SetAttendance(Group target, int mealId, bool attendance, int year, int month, int day)
+
+        public async Task<bool> SetAttendance(Group target, int mealId, bool present, int year, int month, int day)
         {
-            var previousAttendance = _context.Set<GroupAttendance>()
+            var attendance = _context.Set<GroupAttendance>()
             .Where(c => c.MealId == mealId && c.Date == new DateTime(year, month, day) && c.GroupId == target.Id)
             .FirstOrDefault();
-            if (previousAttendance != null)
+            if (attendance != null)
             {
-                previousAttendance.Attendance = attendance;
+                attendance.Attendance = present;
             }
             else
             {
-                _context.Set<GroupAttendance>().Add(new GroupAttendance
+                attendance = new GroupAttendance
                 {
                     MealId = mealId,
                     Date = new DateTime(year, month, day),
                     GroupId = target.Id,
-                    Attendance = attendance
-                });
+                    Attendance = present
+                };
+                _context.Set<GroupAttendance>().Add(attendance);
             }
             await _context.SaveChangesAsync();
+            return attendance.Attendance;
+        }
+        private Expression<Func<Child, bool>> TargetCondition(Group? group)
+        {
+            if (group == null)
+            {
+                return c => true;
+            }
+            return c => c.GroupId == group.Id;
         }
     }
 }

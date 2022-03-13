@@ -18,7 +18,7 @@ namespace Rollcall.Repositories
             var query = track ? _context.Children : _context.Children.AsNoTracking();
             return query.Include(c => c.MyGroup)
             .Include(c => c.DefaultMeals)
-            .Where(child => (child.GroupId == Id)).ToList();
+            .Where(child => (child.GroupId == Id || Id == 0)).ToList();
         }
         public ICollection<Child> GetChildrenByGroup(bool track = false)
         {

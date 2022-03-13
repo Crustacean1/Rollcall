@@ -6,8 +6,8 @@ namespace Rollcall.Models
     {
         public string? Name { get; set; }
         public string? Surname { get; set; }
-        public IEnumerable<DefaultAttendance> DefaultMeals { get; set; }
-        public IEnumerable<ChildAttendance> MyAttendance { get; set; }
+        public IEnumerable<DefaultAttendance>? DefaultMeals { get; set; }
+        public IEnumerable<ChildAttendance>? MyAttendance { get; set; }
 
         public int Id { get; set; }
 

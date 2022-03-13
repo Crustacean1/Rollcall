@@ -14,9 +14,9 @@ namespace Rollcall.Controllers
     {
         private readonly ILogger<GroupAttendanceController> _logger;
         private readonly GroupRepository _groupRepo;
-        private readonly AttendanceService<Group> _attendanceService;
+        private readonly GroupAttendanceService _attendanceService;
         public GroupAttendanceController(ILogger<GroupAttendanceController> logger,
-        AttendanceService<Group> attendanceService,
+        GroupAttendanceService attendanceService,
         GroupRepository groupRepo)
         {
             _logger = logger;
@@ -29,52 +29,65 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<AttendanceSummaryDto> GetMonthlySummary(int groupId, int year, int month)
         {
-            var child = _groupRepo.GetGroup(groupId);
-            if (child == null)
+            Group? group = null;
+            if (groupId != 0)
             {
-                return NotFound();
+                group = _groupRepo.GetGroup(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
             }
-            var result = _attendanceService.GetMonthlySummary(child, year, month);
+            var result = _attendanceService.GetMonthlySummary(group, year, month);
             return Ok(result);
         }
 
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<DayAttendanceDto>> GetChildMonthlyAttendance(int groupId, int year, int month)
+        public ActionResult<List<DayAttendanceDto>> GetMonthlyAttendance(int groupId, int year, int month)
         {
-            var child = _groupRepo.GetGroup(groupId);
-            if (child == null)
+            Group? group = null;
+            if (groupId != 0)
             {
-                return NotFound();
+                group = _groupRepo.GetGroup(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
             }
-            var result = _attendanceService.GetMonthlyAttendance(child, year, month);
+            _logger.LogInformation($"Is group null: {group == null}");
+            var result = _attendanceService.GetMonthlyAttendance(group, year, month);
             return Ok(result);
         }
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}/{day}")]
-        public ActionResult<DayAttendanceDto> GetChildAttendance(int groupId, int year, int month, int day)
+        public ActionResult<DayAttendanceDto> GetDailySummary(int groupId, int year, int month, int day)
         {
-            var child = _groupRepo.GetGroup(groupId);
-            if (child == null)
+            Group? group = null;
+            if (groupId != 0)
             {
-                return NotFound();
+                group = _groupRepo.GetGroup(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
             }
-            return Ok(_attendanceService.GetAttendance(child, year, month, day));
+            return Ok(_attendanceService.GetDailySummary(group, year, month, day));
         }
 
         [HttpPost, Authorize]
         [Route("{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult<DayAttendanceDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] AttendanceRequestDto dto)
+        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] AttendanceRequestDto dto)
         {
-            var child = _groupRepo.GetGroup(groupId);
-            if (child == null)
+            var group = _groupRepo.GetGroup(groupId);
+            if (group == null)
             {
                 return NotFound();
             }
-            await _attendanceService.SetAttendance(child, dto, year, month, day);
-            return Ok(null);
+            var result = await _attendanceService.SetAttendance(group, dto, year, month, day);
+            return Ok(result);
         }
     }
 }

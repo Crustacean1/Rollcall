@@ -22,11 +22,11 @@ class Program
         builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<GroupRepository>();
 
-        builder.Services.AddScoped<IAttendanceRepository<Child>, ChildAttendanceRepository>();
-        builder.Services.AddScoped<IAttendanceRepository<Group>, GroupAttendanceRepository>();
+        builder.Services.AddScoped<ChildAttendanceRepository>();
+        builder.Services.AddScoped<GroupAttendanceRepository>();
 
-        builder.Services.AddScoped<IMaskRepository<Child>, ChildMaskRepository>();
-        builder.Services.AddScoped<IMaskRepository<Group>, GroupMaskRepository>();
+        builder.Services.AddScoped<ChildMaskRepository>();
+        builder.Services.AddScoped<GroupMaskRepository>();
     }
     static private void ConfigureAuthentication()
     {
@@ -71,8 +71,9 @@ class Program
 
         builder.Services.AddScoped<DateValidationFilter>();
 
-        builder.Services.AddScoped<AttendanceService<Child>>();
-        builder.Services.AddScoped<AttendanceService<Group>>();
+        builder.Services.AddScoped<DtoShapingService>();
+        builder.Services.AddScoped<ChildAttendanceService>();
+        builder.Services.AddScoped<GroupAttendanceService>();
     }
     static public void Main(String[] args)
     {

@@ -7,7 +7,7 @@ using Rollcall.Models;
 namespace Rollcall.Controllers
 {
     [ApiController]
-    [Route("attendance/group")]
+    [Route("group")]
     public class GroupController : ControllerBase
     {
         private readonly GroupRepository _repository;
@@ -29,8 +29,32 @@ namespace Rollcall.Controllers
             }
             var group = new Group { Name = dto.Name };
             _repository.AddGroup(group);
+            await _repository.SaveChangesAsync();
 
             return CreatedAtAction(null, null);
+        }
+        [HttpGet, Authorize]
+        [Route("{groupId}")]
+        public ActionResult<GroupDto> GetGroup(int groupId)
+        {
+            if (groupId == 0)
+            {
+                return Ok(new GroupDto
+                {
+                    Name = "Wszystkie",
+                    Id = 0
+                });
+            }
+            var group = _repository.GetGroup(groupId);
+            if (group == null)
+            {
+                return NotFound();
+            }
+            return new GroupDto
+            {
+                Name = group.Name,
+                Id = group.Id
+            };
         }
         [HttpGet, Authorize]
         public ActionResult<List<GroupResultDto>> GetGroups()

@@ -29,6 +29,6 @@ namespace Rollcall.Models
     }
     public class MonthlyAttendanceDto
     {
-        public List<DayAttendanceDto> Days { get; set; }
-    }
+        public List<Dictionary<string, MealAttendanceDto>> Days { get; set; }
+}
 }

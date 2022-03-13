@@ -13,9 +13,9 @@ namespace Rollcall.Controllers
     {
         private readonly ILogger<ChildAttendanceController> _logger;
         private readonly ChildRepository _childRepo;
-        private readonly AttendanceService<Child> _attendanceService;
+        private readonly ChildAttendanceService _attendanceService;
         public ChildAttendanceController(ILogger<ChildAttendanceController> logger,
-        AttendanceService<Child> attendanceService,
+        ChildAttendanceService attendanceService,
         ChildRepository childRepo)
         {
             _logger = logger;
@@ -59,7 +59,7 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-            return Ok(_attendanceService.GetAttendance(child, year, month, day));
+            return Ok(_attendanceService.GetDailyAttendance(child, year, month, day));
         }
 
         [HttpPost, Authorize]
@@ -72,8 +72,8 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-            await _attendanceService.SetAttendance(child, dto, year, month, day);
-            return Ok(null);
+            var result = await _attendanceService.SetAttendance(child, dto, year, month, day);
+            return Ok(result);
         }
     }
 }

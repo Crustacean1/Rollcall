@@ -7,6 +7,6 @@ namespace Rollcall.Models
         public string? Surname { get; set; }
         public int GroupId { get; set; }
         public string? GroupName { get; set; }
-        public IEnumerable<AttendanceRequestDto> DefaultAttendance { get; set; }
+        public Dictionary<string, bool> DefaultAttendance { get; set; }
     }
 }

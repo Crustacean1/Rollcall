@@ -17,16 +17,21 @@ namespace Rollcall.Controllers
 
         private Child Parse(ChildDto dto)
         {
+            var defaultAttendance = new List<DefaultAttendance>();
+            foreach (var meal in dto.DefaultAttendance)
+            {
+                defaultAttendance.Add(new DefaultAttendance
+                {
+                    MealId = _schemaService.Translate(meal.Key),
+                    Attendance = meal.Value
+                });
+            }
             return new Child
             {
                 Name = dto.Name,
                 Surname = dto.Surname,
-                DefaultMeals = dto.DefaultAttendance.Select(d => new DefaultAttendance
-                {
-                    MealId = _schemaService.Translate(d.Name),
-                    Attendance = d.Present
-                }),
-                GroupId = dto.GroupId,
+                DefaultMeals = defaultAttendance,
+                GroupId = dto.GroupId
             };
         }
         private ChildDto Marshall(Child child)
@@ -39,12 +44,9 @@ namespace Rollcall.Controllers
                 GroupName = child.MyGroup.Name,
                 Name = child.Name,
                 Surname = child.Surname,
-                DefaultAttendance = child.DefaultMeals.Select(
-                    d => new AttendanceRequestDto
-                    {
-                        Name = _schemaService.Translate(d.MealId),
-                        Present = d.Attendance
-                    }
+                DefaultAttendance = child.DefaultMeals.ToDictionary(
+                   d => _schemaService.Translate(d.MealId),
+                d => d.Attendance
                 ),
                 GroupId = child.GroupId,
                 Id = child.Id
