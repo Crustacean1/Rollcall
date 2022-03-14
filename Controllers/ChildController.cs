@@ -93,13 +93,13 @@ namespace Rollcall.Controllers
         }
 
         [HttpPost, Authorize]
-        public async Task<ActionResult> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
+        public async Task<ActionResult<int[]>> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
         {
             _logger.LogInformation("Adding children");
             var children = childrenDto.Select(e => Parse(e));
             _childRepository.AddChildren(children);
             await _childRepository.SaveChangesAsync();
-            return Ok();
+            return Ok(children.Select(c => c.Id));
         }
 
         [HttpDelete, Authorize]

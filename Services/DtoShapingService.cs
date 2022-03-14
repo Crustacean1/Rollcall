@@ -61,7 +61,7 @@ namespace Rollcall.Services
         }
         private void SetAttendanceDto(DayAttendanceDto day, AttendanceEntity meal)
         {
-            day.Meals[meal.Name].Attendance = meal.Attendance;
+            day.Meals[meal.Name].Present = meal.Attendance;
         }
         private void SetMaskDto(DayAttendanceDto day, MaskEntity mask)
         {
@@ -94,7 +94,7 @@ namespace Rollcall.Services
             var keys = _schemaService.GetNames();
             foreach (var name in keys)
             {
-                result[name] = new MealAttendanceDto { Attendance = 0, Masked = false };
+                result[name] = new MealAttendanceDto { Present = 0, Masked = false };
             }
             return new DayAttendanceDto
             {

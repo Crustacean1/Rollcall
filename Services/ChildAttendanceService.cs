@@ -39,13 +39,20 @@ namespace Rollcall.Services
             var result = _dtoShaper.CreateMonthlySummary(attendanceData);
             return result;
         }
-        public async Task<AttendanceRequestDto> SetAttendance(Child child, AttendanceRequestDto dto, int year, int month, int day)
+        public async Task<List<AttendanceRequestDto>> SetAttendance(Child child, List<AttendanceRequestDto> dto, int year, int month, int day)
         {
-            var result = await _childRepo.SetAttendance(child, _schemaService.Translate(dto.Name), dto.Present, year, month, day);
-            return new AttendanceRequestDto{
-                Name = dto.Name,
-                Present = result
-            };
+            var updatedAttendance = new List<AttendanceRequestDto>();
+            foreach (var meal in dto)
+            {
+                var mealResult = _childRepo.SetAttendance(child, _schemaService.Translate(meal.Name), meal.Present, year, month, day);
+                updatedAttendance.Add(new AttendanceRequestDto
+                {
+                    Name = meal.Name,
+                    Present = mealResult
+                });
+            }
+            await _childRepo.SaveChangesAsync();
+            return updatedAttendance;
         }
     }
 }

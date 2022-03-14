@@ -14,7 +14,7 @@ namespace Rollcall.Models
             Meals = attendance.Meals.ToDictionary(a => a.Key, a => new MealAttendanceDto
             {
                 Masked = a.Value.Masked,
-                Attendance = a.Value.Attendance
+                Present = a.Value.Present
             });
         }
     }

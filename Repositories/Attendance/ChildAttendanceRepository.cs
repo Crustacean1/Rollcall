@@ -37,7 +37,7 @@ namespace Rollcall.Repositories
             .Select(a => new AttendanceEntity
             {
                 Date = new MealDate { Year = year, Month = month, Day = 0 },
-                Attendance = a.Count(m => m.Attendance&&!m.Masked),
+                Attendance = a.Count(m => m.Attendance && !m.Masked),
                 Name = a.Key
             });
         }
@@ -53,7 +53,7 @@ namespace Rollcall.Repositories
             });
             return result;
         }
-        public async Task<bool> SetAttendance(Child target, int mealId, bool present, int year, int month, int day)
+        public bool SetAttendance(Child target, int mealId, bool present, int year, int month, int day)
         {
             var attendance = _context.Set<ChildAttendance>()
             .Where(c => c.ChildId == target.Id && c.Date == new DateTime(year, month, day) && c.MealId == mealId)
@@ -73,8 +73,11 @@ namespace Rollcall.Repositories
                 };
                 _context.ChildAttendance.Add(attendance);
             }
-            await _context.SaveChangesAsync();
             return attendance.Attendance;
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
         private Expression<Func<ChildAttendance, bool>> TargetCondition(Child? child)
