@@ -65,7 +65,7 @@ namespace Rollcall.Repositories
             return result;
         }
 
-        public async Task<bool> SetAttendance(Group target, int mealId, bool present, int year, int month, int day)
+        public bool SetAttendance(Group target, int mealId, bool present, int year, int month, int day)
         {
             var attendance = _context.Set<GroupAttendance>()
             .Where(c => c.MealId == mealId && c.Date == new DateTime(year, month, day) && c.GroupId == target.Id)
@@ -85,8 +85,11 @@ namespace Rollcall.Repositories
                 };
                 _context.Set<GroupAttendance>().Add(attendance);
             }
-            await _context.SaveChangesAsync();
             return attendance.Attendance;
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
         private Expression<Func<Child, bool>> TargetCondition(Group? group)
         {

@@ -65,7 +65,7 @@ namespace Rollcall.Controllers
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult<DayAttendanceDto[]>> SetAttendance(int childId, int year, int month, int day, [FromBody] AttendanceRequestDto[] dto)
+        public async Task<ActionResult<List<DayAttendanceDto>>> SetAttendance(int childId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)

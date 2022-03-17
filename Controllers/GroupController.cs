@@ -16,7 +16,7 @@ namespace Rollcall.Controllers
             _repository = repository;
         }
         [HttpPost, Authorize]
-        public async Task<ActionResult> AddGroup([FromBody] GroupDto dto)
+        public async Task<ActionResult<GroupDto>> AddGroup([FromBody] GroupDto dto)
         {
             if (dto.Name == null)
             {
@@ -31,7 +31,7 @@ namespace Rollcall.Controllers
             _repository.AddGroup(group);
             await _repository.SaveChangesAsync();
 
-            return CreatedAtAction(null, null);
+            return CreatedAtAction(null, new GroupDto { Name = group.Name, Id = group.Id });
         }
         [HttpGet, Authorize]
         [Route("{groupId}")]

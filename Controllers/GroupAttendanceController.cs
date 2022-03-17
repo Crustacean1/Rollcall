@@ -79,7 +79,7 @@ namespace Rollcall.Controllers
         [HttpPost, Authorize]
         [Route("{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] AttendanceRequestDto dto)
+        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
             var group = _groupRepo.GetGroup(groupId);
             if (group == null)
