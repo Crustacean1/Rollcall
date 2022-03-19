@@ -28,7 +28,7 @@ namespace Rollcall.Services
         //}
         public MonthlyAttendanceDto GetMonthlyAttendance(Group target, int year, int month)
         {
-            var attendanceData = _groupRepo.GetMonthlyAttendance(target, year, month);
+            var attendanceData = _groupRepo.GetAttendance(target, year, month);
             var maskData = _maskRepo.GetMasks(target, year, month);
             _logger.LogInformation("attendance size: " + attendanceData.ToList().Count);
             _logger.LogInformation("mask size: " + maskData.ToList().Count);
@@ -37,14 +37,14 @@ namespace Rollcall.Services
         }
         public DayAttendanceDto GetDailySummary(Group target, int year, int month, int day)
         {
-            var attendanceData = _groupRepo.GetDailySummary(target, year, month, day);
+            var attendanceData = _groupRepo.GetAttendance(target, year, month, day);
             var maskData = _maskRepo.GetMask(target, year, month, day);
             var result = _dtoShaper.CreateDailyAttendance(attendanceData, maskData);
             return result;
         }
         public AttendanceSummaryDto GetMonthlySummary(Group target, int year, int month)
         {
-            var attendanceData = _groupRepo.GetMonthlySummary(target, year, month);
+            List<NamedAttendanceEntity> attendanceData = _groupRepo.GetMonthlySummary(target, year, month).ToList();
             var result = _dtoShaper.CreateMonthlySummary(attendanceData);
             return result;
         }
@@ -62,9 +62,6 @@ namespace Rollcall.Services
             }
             await _groupRepo.SaveChangesAsync();
             return result;
-        }
-        public async Task<bool> ExtendGroupAttendance(Group? target, int year,int month){
-            _child
         }
     }
 }

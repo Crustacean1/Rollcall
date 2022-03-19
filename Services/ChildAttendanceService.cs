@@ -27,7 +27,7 @@ namespace Rollcall.Services
         }
         public MonthlyAttendanceDto GetMonthlyAttendance(Child child, int year, int month)
         {
-            var attendanceData = _childRepo.GetMonthlyAttendance(child, year, month);
+            var attendanceData = _childRepo.GetAttendance(child, year, month);
             var maskData = _maskRepo.GetMasks(child, year, month);
 
             var result = _dtoShaper.CreateMonthlyAttendance(year, month, attendanceData, maskData);
@@ -36,7 +36,7 @@ namespace Rollcall.Services
         public AttendanceSummaryDto GetMonthlySummary(Child child, int year, int month)
         {
             var attendanceData = _childRepo.GetMonthlySummary(child, year, month);
-            var result = _dtoShaper.CreateMonthlySummary(attendanceData);
+            var result = _dtoShaper.CreateMonthlySummary(attendanceData.ToList());
             return result;
         }
         public async Task<List<AttendanceRequestDto>> SetAttendance(Child child, List<AttendanceRequestDto> dto, int year, int month, int day)

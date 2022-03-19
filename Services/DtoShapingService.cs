@@ -16,16 +16,16 @@ namespace Rollcall.Services
             _defaultDay = CreateDefaultDayAttendance();
             _defaultSummary = CreateDefaultSummary();
         }
-        public AttendanceSummaryDto CreateMonthlySummary(IEnumerable<AttendanceEntity> attendance)
+        public AttendanceSummaryDto CreateMonthlySummary(IEnumerable<NamedAttendanceEntity> attendance)
         {
             var result = GetDefaultSummary();
             foreach (var meal in attendance)
             {
-                result.Meals[meal.Name] = meal.Attendance;
+                result.Meals[meal.Name] = meal.Present;
             }
             return result;
         }
-        public DayAttendanceDto CreateDailyAttendance(IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
+        public DayAttendanceDto CreateDailyAttendance(IEnumerable<NamedAttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
         {
             var result = GetDefaultDayAttendance();
             foreach (var meal in attendance)
@@ -38,7 +38,7 @@ namespace Rollcall.Services
             }
             return result;
         }
-        public MonthlyAttendanceDto CreateMonthlyAttendance(int year, int month, IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
+        public MonthlyAttendanceDto CreateMonthlyAttendance(int year, int month, IEnumerable<NamedAttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
         {
             var monthAttendance = new List<DayAttendanceDto>();
             var daysInMonth = DateTime.DaysInMonth(year, month);
@@ -59,9 +59,9 @@ namespace Rollcall.Services
                 Days = monthAttendance.Select(a => a.Meals).ToList()
             };
         }
-        private void SetAttendanceDto(DayAttendanceDto day, AttendanceEntity meal)
+        private void SetAttendanceDto(DayAttendanceDto day, NamedAttendanceEntity meal)
         {
-            day.Meals[meal.Name].Present = meal.Attendance;
+            day.Meals[meal.Name].Present = meal.Present;
         }
         private void SetMaskDto(DayAttendanceDto day, MaskEntity mask)
         {

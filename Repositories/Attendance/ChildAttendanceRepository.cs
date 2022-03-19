@@ -14,44 +14,32 @@ namespace Rollcall.Repositories
         {
             _logger = logger;
         }
-        public IEnumerable<AttendanceEntity> GetMonthlyAttendance(Child? target, int year, int month)
+        public IEnumerable<NamedAttendanceEntity> GetAttendance(Child? target, int year, int month, int day = 0)
         {
-            Expression<Func<ChildAttendance, bool>> dateCondition = a => a.Date.Year == year && a.Date.Month == month;
-            var result = GetAttendanceQuery(TargetCondition(target), dateCondition)
-            .Select(a => new AttendanceEntity
+            var childAttendance = GetSetWhere(ChildAttendanceCondition(target)).Where(ChildDateCondition(year, month, day));
+            var result = childAttendance.Select(q => new AttendanceEntity
             {
-                Attendance = a.Attendance ? 1 : 0,
-                Name = a.MealName,
-                Date = new MealDate { Year = year, Month = month, Day = a.Day },
+                MealId = q.MealId,
+                Present = q.Attendance ? 1 : 0,
+                Date = new MealDate { Year = year, Month = month, Day = q.Date.Day }
             });
-            return result;
+            return AppendNames(result);
         }
-        public IEnumerable<AttendanceEntity> GetMonthlySummary(Child target, int year, int month)
+        public IEnumerable<NamedAttendanceEntity> GetMonthlySummary(Child target, int year, int month)
         {
-            Expression<Func<AttendanceEntry, bool>> dateCondition = (e) => (e.Year == year && e.Month == month);
-            Expression<Func<Child, bool>> childCondition = c => c.Id == target.Id;
+            var children = GetSetWhere(ChildCondition(target));
+            var childAttendance = GetSetWhere(ChildDateCondition(year, month, 0)).Where(ChildAttendanceCondition(target));
+            var groupAttendance = GetSetWhere(GroupDateCondition(year, month, 0)).Where(GroupAttendanceCondition(target));
+            var attendance = JoinAttendance(JoinAttendance(children, childAttendance), groupAttendance);
 
-            var childAttendance = GetMaskedSummaryQuery(childCondition, dateCondition);
-
-            return childAttendance.GroupBy(a => a.MealName)
+            var result = attendance.GroupBy(a => a.MealId)
             .Select(a => new AttendanceEntity
             {
-                Date = new MealDate { Year = year, Month = month, Day = 0 },
-                Attendance = a.Count(m => m.Attendance && !m.Masked),
-                Name = a.Key
+                MealId = a.Key,
+                Present = a.Count(m => m.Present && !m.Masked),
+                Date = new MealDate { Year = year, Month = month, Day = 0 }
             });
-        }
-        public IEnumerable<AttendanceEntity> GetAttendance(Child? target, int year, int month, int day)
-        {
-            Expression<Func<ChildAttendance, bool>> dateCondition = a => a.Date.Year == year && a.Date.Month == month && a.Date.Day == day;
-            var result = GetAttendanceQuery(TargetCondition(target), dateCondition)
-            .Select(a => new AttendanceEntity
-            {
-                Attendance = a.Attendance ? 1 : 0,
-                Date = new MealDate { Year = year, Month = month, Day = day },
-                Name = a.MealName
-            });
-            return result;
+            return AppendNames(result);
         }
         public bool SetAttendance(Child target, int mealId, bool present, int year, int month, int day)
         {
@@ -80,13 +68,29 @@ namespace Rollcall.Repositories
             await _context.SaveChangesAsync();
         }
 
-        private Expression<Func<ChildAttendance, bool>> TargetCondition(Child? child)
+        private Expression<Func<GroupAttendance, bool>> GroupAttendanceCondition(Child? child)
+        {
+            if (child == null)
+            {
+                return c => true;
+            }
+            return c => c.GroupId == child.GroupId;
+        }
+        private Expression<Func<ChildAttendance, bool>> ChildAttendanceCondition(Child? child)
         {
             if (child == null)
             {
                 return c => true;
             }
             return c => c.ChildId == child.Id;
+        }
+        private Expression<Func<Child, bool>> ChildCondition(Child? child)
+        {
+            if (child == null)
+            {
+                return c => true;
+            }
+            return c => c.Id == child.Id;
         }
     }
 }

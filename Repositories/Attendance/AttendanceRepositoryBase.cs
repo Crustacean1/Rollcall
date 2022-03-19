@@ -7,8 +7,15 @@ namespace Rollcall.Repositories
 {
     public class AttendanceEntity
     {
+        public int MealId { get; set; }
+        public int Present { get; set; }
+        public MealDate Date { get; set; }
+        public int ChildId { get; set; }
+    }
+    public class NamedAttendanceEntity
+    {
         public string Name { get; set; }
-        public int Attendance { get; set; }
+        public int Present { get; set; }
         public MealDate Date { get; set; }
         public int ChildId { get; set; }
     }
@@ -19,74 +26,72 @@ namespace Rollcall.Repositories
         public int Month { get; set; }
         public int Day { get; set; }
         public bool Masked { get; set; }
-        public bool Attendance { get; set; }
-        public string MealName { get; set; }
-        public int ChildId { get; set; }
+        public bool Present { get; set; }
+        public int MealId { get; set; }
+        public int GroupId { get; set; }
     }
 
-    public class AttendanceRepositoryBase
+    public class AttendanceRepositoryBase : RepositoryBase
     {
-        protected readonly RepositoryContext _context;
+        public AttendanceRepositoryBase(RepositoryContext context) : base(context) { }
+        protected IQueryable<NamedAttendanceEntity> AppendNames(IQueryable<AttendanceEntity> entries)
+        {
+            return entries.Join(_context.Set<MealSchema>().AsNoTracking(), e => e.MealId, s => s.Id, (e, s) => new NamedAttendanceEntity
+            {
+                Name = s.Name,
+                Present = e.Present,
+                Date = e.Date,
+                ChildId = e.ChildId
+            });
+        }
+        protected IQueryable<AttendanceEntry> JoinAttendance(IQueryable<AttendanceEntry> children, IQueryable<GroupAttendance> groupAttendance)
+        {
+            return children.
+            GroupJoin(groupAttendance, c => c.GroupId, a => a.GroupId, (entries, attendance) => new { entries, attendance })
+            .SelectMany(a => a.attendance.DefaultIfEmpty(), (a, c) => new AttendanceEntry
+            {
+                MealId = a.entries.MealId,
 
-        public AttendanceRepositoryBase(RepositoryContext context)
-        {
-            _context = context;
+                Year = a.entries.Year,
+                Month = a.entries.Month,
+                Day = a.entries.Day,
+
+                Present = a.entries.Present,
+                Masked = c == null ? false : c.Attendance
+            });
         }
-        protected IQueryable<AttendanceEntry> GetAttendanceQuery(Expression<Func<ChildAttendance, bool>> targetCondition,
-        Expression<Func<ChildAttendance,bool>> dateCondition)
+        protected IQueryable<AttendanceEntry> JoinAttendance(IQueryable<Child> children, IQueryable<ChildAttendance> attendance)
         {
-            var result = _context.Set<ChildAttendance>().AsNoTracking()
-                        .Where(targetCondition)
-                        .Where(dateCondition)
-                        .Join(_context.Set<MealSchema>().AsNoTracking(), c => c.MealId, s => s.Id, (c, s) => new AttendanceEntry
-                        {
-                            Year = c.Date.Year,
-                            Month = c.Date.Month,
-                            Day = c.Date.Day,
-                            Attendance = c.Attendance,
-                            MealName = s.Name,
-                            Masked = false,
-                            ChildId = c.ChildId
-                        });
-            return result;
+            return children.Join(attendance, c => c.Id, a => a.ChildId, (c, a) => new AttendanceEntry
+            {
+                MealId = a.MealId,
+                GroupId = c.GroupId,
+
+                Masked = false,
+                Present = a.Attendance,
+
+                Year = a.Date.Year,
+                Month = a.Date.Month,
+                Day = a.Date.Day
+            });
         }
-        protected IQueryable<AttendanceEntry> GetUnmaskedSummaryQuery(Expression<Func<Child, bool>> childCondition, Expression<Func<AttendanceEntry, bool>> dateCondition)
+        protected Expression<Func<GroupAttendance, bool>> GroupDateCondition(int year, int month, int day)
         {
-            var fullAttendance = from children in _context.Set<Child>().AsNoTracking().Where(childCondition)
-                                 join childAttendance in _context.Set<ChildAttendance>().AsNoTracking() on children.Id equals childAttendance.ChildId
-                                 join mealSchema in _context.Set<MealSchema>().AsNoTracking() on childAttendance.MealId equals mealSchema.Id
-                                 select new AttendanceEntry
-                                 {
-                                     Masked = false,
-                                     Attendance = childAttendance.Attendance,
-                                     MealName = mealSchema.Name,
-                                     Year = childAttendance.Date.Year,
-                                     Month = childAttendance.Date.Month,
-                                     Day = childAttendance.Date.Day,
-                                 };
-            return fullAttendance.Where(dateCondition);
+            if (day == 0)
+            {
+                return c => c.Date.Year == year && c.Date.Month == month;
+            }
+            return c => c.Date == new DateTime(year, month, day);
         }
-        protected IQueryable<AttendanceEntry> GetMaskedSummaryQuery(Expression<Func<Child, bool>> childCondition, Expression<Func<AttendanceEntry, bool>> dateCondition)
+        protected Expression<Func<ChildAttendance, bool>> ChildDateCondition(int year, int month, int day)
         {
-            var fullAttendance = from children in _context.Set<Child>().AsNoTracking().Where(childCondition)
-                                 join childAttendance in _context.Set<ChildAttendance>().AsNoTracking() on children.Id equals childAttendance.ChildId
-                                 join sparseGroupAttendance in _context.Set<GroupAttendance>().AsNoTracking() on
-                                    new { children.GroupId, childAttendance.Date, childAttendance.MealId }
-                                    equals
-                                    new { sparseGroupAttendance.GroupId, sparseGroupAttendance.Date, sparseGroupAttendance.MealId }
-                                    into ga
-                                 from groupAttendance in ga.DefaultIfEmpty()
-                                 join mealSchema in _context.Set<MealSchema>().AsNoTracking() on childAttendance.MealId equals mealSchema.Id
-                                 select new AttendanceEntry
-                                 {
-                                     Masked = groupAttendance == null ? false : groupAttendance.Attendance,
-                                     Attendance = childAttendance.Attendance,
-                                     MealName = mealSchema.Name,
-                                     Year = childAttendance.Date.Year,
-                                     Month = childAttendance.Date.Month,
-                                     Day = childAttendance.Date.Day,
-                                 };
-            return fullAttendance.Where(dateCondition);
+                return c => c.Date.Year == year && c.Date.Month == month;
+            if (day == 0)
+            {
+                return c => c.Date.Year == year && c.Date.Month == month;
+            }
+            return c => c.Date == new DateTime(year, month, day);
         }
     }
+
 }
