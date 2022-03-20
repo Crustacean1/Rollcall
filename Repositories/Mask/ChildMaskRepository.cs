@@ -6,16 +6,9 @@ namespace Rollcall.Repositories
     public class ChildMaskRepository : MaskRepositoryBase
     {
         public ChildMaskRepository(RepositoryContext context) : base(context) { }
-        public IEnumerable<MaskEntity> GetMasks(Child target, int year, int month)
+        public IEnumerable<MaskEntity> GetMasks(Child target, int year, int month, int day = 0)
         {
-            Expression<Func<GroupAttendance, bool>> dateCondition = c => c.Date.Year == year && c.Date.Month == month;
-            var result = ConstructQuery(TargetCondition(target), dateCondition);
-            return result;
-        }
-        public IEnumerable<MaskEntity> GetMask(Child target, int year, int month, int day)
-        {
-            Expression<Func<GroupAttendance, bool>> dateCondition = c => c.Date.Year == year && c.Date.Month == month && c.Date.Day == day;
-            var result = ConstructQuery(TargetCondition(target), dateCondition);
+            var result = ConstructQuery(TargetCondition(target), DateCondition(year, month, day));
             return result;
         }
         private Expression<Func<GroupAttendance, bool>> TargetCondition(Child? child)

@@ -91,7 +91,6 @@ namespace Rollcall.Controllers
 
             return Ok(children.Select(child => Marshall(child)).ToList());
         }
-
         [HttpPost, Authorize]
         public async Task<ActionResult<int[]>> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
         {
@@ -100,6 +99,30 @@ namespace Rollcall.Controllers
             _childRepository.AddChildren(children);
             await _childRepository.SaveChangesAsync();
             return Ok(children.Select(c => c.Id));
+        }
+        [HttpPost, Authorize]
+        [Route("attendance/{childId}")]
+        public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IEnumerable<AttendanceRequestDto> update)
+        {
+            var child = _childRepository.GetChild(childId, true);
+            if (child == null)
+            {
+                return NotFound();
+            }
+            foreach (var mealUpdate in update)
+            {
+                var currentId = _schemaService.Translate(mealUpdate.Name);
+                var attendance = child.DefaultMeals.Where(c => c.MealId == currentId).FirstOrDefault();
+                if (attendance == null)
+                {
+                    child.DefaultMeals.Append(new DefaultAttendance { MealId = currentId, Attendance = mealUpdate.Present });
+                    continue;
+                }
+                attendance.Attendance = mealUpdate.Present;
+            }
+            await _childRepository.SaveChangesAsync();
+            return child.DefaultMeals
+            .Select(m => new AttendanceRequestDto { Name = _schemaService.Translate(m.MealId), Present = m.Attendance }).ToList();
         }
 
         [HttpDelete, Authorize]

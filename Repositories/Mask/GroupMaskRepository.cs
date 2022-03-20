@@ -7,24 +7,17 @@ namespace Rollcall.Repositories
     public class GroupMaskRepository : MaskRepositoryBase
     {
         public GroupMaskRepository(RepositoryContext context) : base(context) { }
-        public IEnumerable<MaskEntity> GetMasks(Group target, int year, int month)
+        public IEnumerable<MaskEntity> GetMasks(Group? target, int year, int month, int day = 0)
         {
-            Expression<Func<GroupAttendance, bool>> dateCondition = c => c.Date.Year == year && c.Date.Month == month;
-            var result = ConstructQuery(TargetCondition(target), dateCondition);
-            return result;
-        }
-        public IEnumerable<MaskEntity> GetMask(Group target, int year, int month, int day)
-        {
-            Expression<Func<GroupAttendance, bool>> dateCondition = c => c.Date.Year == year && c.Date.Month == month && c.Date.Day == day;
-            var result = ConstructQuery(TargetCondition(target), dateCondition);
-            return result;
-        }
-        public Expression<Func<GroupAttendance, bool>> TargetCondition(Group? group)
-        {
-            if (group == null)
+            if (target == null)
             {
-                return g => true;
+                return GeneralQuery(DateCondition(year, month, day));
             }
+            var result = ConstructQuery(TargetCondition(target), DateCondition(year, month, day));
+            return result;
+        }
+        public Expression<Func<GroupAttendance, bool>> TargetCondition(Group group)
+        {
             return g => g.GroupId == group.Id;
         }
     }

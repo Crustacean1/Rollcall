@@ -81,12 +81,18 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
-            var group = _groupRepo.GetGroup(groupId);
-            if (group == null)
+            Group? group = null;
+            if (groupId != 0)
             {
-                return NotFound();
+                group = _groupRepo.GetGroup(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
             }
-            var result = await _attendanceService.SetAttendance(group, dto, year, month, day);
+
+            var date = new MealDate(year, month, day);
+            var result = await _attendanceService.SetAttendance(group, dto, date);
             return Ok(result);
         }
     }

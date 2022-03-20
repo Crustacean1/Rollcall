@@ -19,7 +19,7 @@ namespace Rollcall.Services
         public DayAttendanceDto GetDailyAttendance(Child child, int year, int month, int day)
         {
             var attendanceData = _childRepo.GetAttendance(child, year, month, day);
-            var maskData = _maskRepo.GetMask(child, year, month, day);
+            var maskData = _maskRepo.GetMasks(child, year, month, day);
 
             var result = _dtoShaper.CreateDailyAttendance(attendanceData, maskData);
 

@@ -22,38 +22,32 @@ namespace Rollcall.Services
             _schemaService = schemaService;
             _logger = logger;
         }
-        //public DayAttendanceDto GetDailyAttendance(Group target, int year, int month, int day)
-        //{
-
-        //}
-        public MonthlyAttendanceDto GetMonthlyAttendance(Group target, int year, int month)
+        public MonthlyAttendanceDto GetMonthlyAttendance(Group? target, int year, int month)
         {
-            var attendanceData = _groupRepo.GetAttendance(target, year, month);
+            var attendanceData = _groupRepo.GetAttendance(target, target == null, year, month);
             var maskData = _maskRepo.GetMasks(target, year, month);
-            _logger.LogInformation("attendance size: " + attendanceData.ToList().Count);
-            _logger.LogInformation("mask size: " + maskData.ToList().Count);
             var result = _dtoShaper.CreateMonthlyAttendance(year, month, attendanceData, maskData);
             return result;
         }
-        public DayAttendanceDto GetDailySummary(Group target, int year, int month, int day)
+        public DayAttendanceDto GetDailySummary(Group? target, int year, int month, int day)
         {
-            var attendanceData = _groupRepo.GetAttendance(target, year, month, day);
-            var maskData = _maskRepo.GetMask(target, year, month, day);
+            var attendanceData = _groupRepo.GetSummary(target, target == null, year, month, day);
+            var maskData = _maskRepo.GetMasks(target, year, month, day);
             var result = _dtoShaper.CreateDailyAttendance(attendanceData, maskData);
             return result;
         }
-        public AttendanceSummaryDto GetMonthlySummary(Group target, int year, int month)
+        public AttendanceSummaryDto GetMonthlySummary(Group? target, int year, int month)
         {
-            List<NamedAttendanceEntity> attendanceData = _groupRepo.GetMonthlySummary(target, year, month).ToList();
+            var attendanceData = _groupRepo.GetSummary(target, true, year, month);
             var result = _dtoShaper.CreateMonthlySummary(attendanceData);
             return result;
         }
-        public async Task<List<AttendanceRequestDto>> SetAttendance(Group target, List<AttendanceRequestDto> dto, int year, int month, int day)
+        public async Task<List<AttendanceRequestDto>> SetAttendance(Group? target, List<AttendanceRequestDto> dto, MealDate date)
         {
             var result = new List<AttendanceRequestDto>();
             foreach (var meal in dto)
             {
-                var present = _groupRepo.SetAttendance(target, _schemaService.Translate(meal.Name), meal.Present, year, month, day);
+                var present = _groupRepo.SetGroupAttendance(target, _schemaService.Translate(meal.Name), meal.Present, date);
                 result.Add(new AttendanceRequestDto
                 {
                     Name = meal.Name,
