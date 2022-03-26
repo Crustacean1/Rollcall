@@ -8,22 +8,30 @@ namespace Rollcall.Services
         private readonly ILogger<DtoShapingService> _logger;
         private readonly SchemaService _schemaService;
         private readonly DayAttendanceDto _defaultDay;
-        private readonly AttendanceSummaryDto _defaultSummary;
+        private readonly AttendanceCountDto _defaultCount;
         public DtoShapingService(ILogger<DtoShapingService> logger, SchemaService schemaService)
         {
             _logger = logger;
             _schemaService = schemaService;
             _defaultDay = CreateDefaultDayAttendance();
-            _defaultSummary = CreateDefaultSummary();
+            _defaultCount = CreateDefaultCount();
         }
-        public AttendanceSummaryDto CreateMonthlySummary(IEnumerable<AttendanceEntity> attendance)
+        public AttendanceCountDto CreateMonthlyCount(IEnumerable<AttendanceEntity> attendance)
         {
-            var result = GetDefaultSummary();
+            var result = GetDefaultCount();
             foreach (var meal in attendance)
             {
                 result.Meals[meal.Name] = meal.Present;
             }
             return result;
+        }
+        public IEnumerable<ChildAttendanceSummaryDto> CreateMonthlySummary(IEnumerable<ChildAttendanceEntity> attendance){
+            return attendance.GroupBy(a => new {a.ChildId,a.Name,a.Surname}).Select(c => new ChildAttendanceSummaryDto{
+                Name = c.Key.Name,
+                Surname = c.Key.Surname,
+                ChildId = c.Key.ChildId,
+                Summary = c.ToDictionary(m => m.MealName,m => m.Present)
+            });
         }
         public DayAttendanceDto CreateDailyAttendance(IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
         {
@@ -38,6 +46,7 @@ namespace Rollcall.Services
             }
             return result;
         }
+
         public MonthlyAttendanceDto CreateMonthlyAttendance(int year, int month, IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
         {
             var monthAttendance = new List<DayAttendanceDto>();
@@ -67,15 +76,15 @@ namespace Rollcall.Services
         {
             day.Meals[mask.Name].Masked = mask.Masked;
         }
-        private AttendanceSummaryDto GetDefaultSummary()
+        private AttendanceCountDto GetDefaultCount()
         {
-            return new AttendanceSummaryDto(_defaultSummary);
+            return new AttendanceCountDto(_defaultCount);
         }
         private DayAttendanceDto GetDefaultDayAttendance()
         {
             return new DayAttendanceDto(_defaultDay);
         }
-        private AttendanceSummaryDto CreateDefaultSummary()
+        private AttendanceCountDto CreateDefaultCount()
         {
             var result = new Dictionary<string, int>();
             var keys = _schemaService.GetNames();
@@ -83,7 +92,7 @@ namespace Rollcall.Services
             {
                 result[name] = 0;
             }
-            return new AttendanceSummaryDto
+            return new AttendanceCountDto
             {
                 Meals = result
             };

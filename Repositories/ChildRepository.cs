@@ -31,6 +31,20 @@ namespace Rollcall.Repositories
         {
             _context.Children.AddRange(children);
         }
+        public async Task AddDefaultMeal(Child child, DefaultAttendance attendance)
+        {
+            attendance.ChildId = child.Id;
+            var oldAttendance = child.DefaultMeals.Where(a => a.MealId == attendance.MealId).FirstOrDefault();
+            if (oldAttendance == null)
+            {
+                _context.Set<DefaultAttendance>().Add(attendance);
+            }
+            else
+            {
+                oldAttendance.Attendance = attendance.Attendance;
+            }
+            await SaveChangesAsync();
+        }
         public void RemoveChild(Child child)
         {
             _context.Children.Remove(child);

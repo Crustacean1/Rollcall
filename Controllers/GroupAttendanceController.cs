@@ -25,9 +25,9 @@ namespace Rollcall.Controllers
         }
 
         [HttpGet, Authorize]
-        [Route("summary/{groupId}/{year}/{month}")]
+        [Route("count/{groupId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<AttendanceSummaryDto> GetMonthlySummary(int groupId, int year, int month)
+        public ActionResult<AttendanceCountDto> GetMonthlyCount(int groupId, int year, int month)
         {
             Group? group = null;
             if (groupId != 0)
@@ -38,8 +38,17 @@ namespace Rollcall.Controllers
                     return NotFound();
                 }
             }
-            var result = _attendanceService.GetMonthlySummary(group, year, month);
+            var result = _attendanceService.GetMonthlyCount(group, year, month);
             return Ok(result);
+        }
+
+        [HttpGet, Authorize]
+        [Route("summary/{year}/{month}")]
+        [ServiceFilter(typeof(DateValidationFilter))]
+        public ActionResult<IEnumerable<ChildAttendanceSummaryDto>> GetMonthlySummary(int year, int month)
+        {
+            var result = _attendanceService.GetMonthlySummary(year, month);
+            return result.ToList();
         }
 
         [HttpGet, Authorize]
@@ -73,12 +82,12 @@ namespace Rollcall.Controllers
                     return NotFound();
                 }
             }
-            return Ok(_attendanceService.GetDailySummary(group, year, month, day));
+            return Ok(_attendanceService.GetDailyCount(group, year, month, day));
         }
 
         [HttpPost, Authorize]
         [Route("{groupId}/{year}/{month}/{day}")]
-        [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(FutureDateValidationFilter))]
         public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
             Group? group = null;

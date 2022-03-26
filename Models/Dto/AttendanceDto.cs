@@ -18,11 +18,11 @@ namespace Rollcall.Models
             });
         }
     }
-    public class AttendanceSummaryDto
+    public class AttendanceCountDto
     {
         public Dictionary<string, int> Meals { get; set; }
-        public AttendanceSummaryDto() { }
-        public AttendanceSummaryDto(AttendanceSummaryDto attendance)
+        public AttendanceCountDto() { Meals = new Dictionary<string, int>(); }
+        public AttendanceCountDto(AttendanceCountDto attendance)
         {
             Meals = new Dictionary<string, int>(attendance.Meals);
         }
@@ -30,5 +30,5 @@ namespace Rollcall.Models
     public class MonthlyAttendanceDto
     {
         public List<Dictionary<string, MealAttendanceDto>> Days { get; set; }
-}
+    }
 }

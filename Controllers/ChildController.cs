@@ -36,9 +36,7 @@ namespace Rollcall.Controllers
         }
         private ChildDto Marshall(Child child)
         {
-            _logger.LogInformation($"My group: {child.MyGroup.Name}");
             var list = child.DefaultMeals.ToList();
-            _logger.LogInformation($"My attendance {list[0].MealId}");
             return new ChildDto
             {
                 GroupName = child.MyGroup.Name,
@@ -104,23 +102,18 @@ namespace Rollcall.Controllers
         [Route("attendance/{childId}")]
         public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IEnumerable<AttendanceRequestDto> update)
         {
-            var child = _childRepository.GetChild(childId, true);
+            var child = _childRepository.GetChild(childId,true);
             if (child == null)
             {
                 return NotFound();
             }
+            var results = new List<AttendanceRequestDto>();
             foreach (var mealUpdate in update)
             {
                 var currentId = _schemaService.Translate(mealUpdate.Name);
-                var attendance = child.DefaultMeals.Where(c => c.MealId == currentId).FirstOrDefault();
-                if (attendance == null)
-                {
-                    child.DefaultMeals.Append(new DefaultAttendance { MealId = currentId, Attendance = mealUpdate.Present });
-                    continue;
-                }
-                attendance.Attendance = mealUpdate.Present;
+                _logger.LogInformation($"Adding entry: {mealUpdate.Name}");
+                await _childRepository.AddDefaultMeal(child, new DefaultAttendance { MealId = currentId, Attendance = mealUpdate.Present });
             }
-            await _childRepository.SaveChangesAsync();
             return child.DefaultMeals
             .Select(m => new AttendanceRequestDto { Name = _schemaService.Translate(m.MealId), Present = m.Attendance }).ToList();
         }

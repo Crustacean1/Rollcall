@@ -25,6 +25,8 @@ class Program
         builder.Services.AddScoped<ChildAttendanceRepository>();
         builder.Services.AddScoped<GroupAttendanceRepository>();
 
+        builder.Services.AddScoped<AttendanceSummaryRepository>();
+
         builder.Services.AddScoped<ChildMaskRepository>();
         builder.Services.AddScoped<GroupMaskRepository>();
     }
@@ -70,6 +72,7 @@ class Program
         );
 
         builder.Services.AddScoped<DateValidationFilter>();
+        builder.Services.AddScoped<FutureDateValidationFilter>();
 
         builder.Services.AddScoped<DtoShapingService>();
         builder.Services.AddScoped<ChildAttendanceService>();
@@ -95,10 +98,13 @@ class Program
         }
 
         app.UseRouting();
-        app.UseCors(options => options.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        app.UseCors(options => options.AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowAnyOrigin());
 
         app.MapControllers();
 

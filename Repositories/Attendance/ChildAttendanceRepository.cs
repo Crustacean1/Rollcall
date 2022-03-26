@@ -1,22 +1,20 @@
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
-
 using Rollcall.Models;
-using Rollcall.Services;
 
 namespace Rollcall.Repositories
 {
 
-    public class ChildAttendanceRepository : AttendanceRepositoryBase
+    public class ChildAttendanceRepository : MonthlyAttendanceRepository
     {
         private readonly ILogger<ChildAttendanceRepository> _logger;
         public ChildAttendanceRepository(RepositoryContext context, ILogger<ChildAttendanceRepository> logger) : base(context)
         {
             _logger = logger;
         }
-        public IEnumerable<AttendanceEntity> GetAttendance(Child? target, int year, int month, int day = 0)
+        public IEnumerable<AttendanceEntity> GetAttendance(Child child, int year, int month)
         {
-            var childAttendance = GetSetWhere<ChildAttendance>(ChildAttendanceCondition(target)).Where(ChildDateCondition(year, month, day));
+            var childAttendance = GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id)
+            .Where(a => a.Date.Year == year && a.Date.Month == month);
+
             var result = childAttendance.Join(_context.Set<MealSchema>(), c => c.MealId, s => s.Id, (e, s) => new AttendanceEntity
             {
                 Name = s.Name,
@@ -25,14 +23,16 @@ namespace Rollcall.Repositories
             });
             return result;
         }
-        public IEnumerable<AttendanceEntity> GetMonthlySummary(Child target, int year, int month)
+        public IEnumerable<AttendanceEntity> GetMonthlyCount(Child child, int year, int month)
         {
-            var children = GetSetWhere(ChildCondition(target));
-            var childAttendance = GetSetWhere(ChildDateCondition(year, month, 0))
-            .Where(ChildAttendanceCondition(target))
+            var children = GetSetWhere<Child>(c => c.Id == child.Id);
+
+            var childAttendance = GetSetWhere<ChildAttendance>(a => a.Date.Year == year && a.Date.Month == month)
+            .Where(c => c.ChildId == child.Id)
             .Where(a => a.Attendance);
-            var groupAttendance = GetSetWhere(GroupDateCondition(year, month, 0))
-            .Where(GroupAttendanceCondition(target))
+
+            var groupAttendance = GetSetWhere<GroupAttendance>(a => a.Date.Year == year && a.Date.Month == month)
+            .Where(c => c.GroupId == child.GroupId)
             .Where(a => a.Attendance);
 
             var attendance = JoinAttendance(children, childAttendance, groupAttendance);
@@ -47,6 +47,42 @@ namespace Rollcall.Repositories
             });
             return result;
         }
+        public int ExtendAttendance(IEnumerable<Child> children, int year, int month)
+        {
+            int successfullUpdates = 0;
+            foreach (var child in children)
+            {
+                if (GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id).FirstOrDefault() == null)
+                {
+                    ExtendAttendance(child, month, year);
+                    ++successfullUpdates;
+                }
+            }
+            return successfullUpdates;
+        }
+        private bool ExtendAttendance(Child child, int year, int month)
+        {
+            var defaultAttendance = child.DefaultMeals;
+            if(defaultAttendance == null){return false;}
+
+            var newAttendances = new List<ChildAttendance>();
+            for (int i = 0; i < DateTime.DaysInMonth(year, month); ++i)
+            {
+                foreach (var meal in defaultAttendance)
+                {
+                    newAttendances.Add(new ChildAttendance
+                    {
+                        ChildId = child.Id,
+                        MealId = meal.MealId,
+                        Attendance = meal.Attendance,
+                        Date = new DateTime(year, month, i + 1)
+                    });
+                }
+            }
+            _context.Set<ChildAttendance>().AddRange(newAttendances);
+            return true;
+        }
+
         public bool SetAttendance(Child target, int mealId, bool present, int year, int month, int day)
         {
             var attendance = _context.Set<ChildAttendance>()
@@ -68,31 +104,6 @@ namespace Rollcall.Repositories
                 _context.ChildAttendance.Add(attendance);
             }
             return attendance.Attendance;
-        }
-
-        private Expression<Func<GroupAttendance, bool>> GroupAttendanceCondition(Child? child)
-        {
-            if (child == null)
-            {
-                return c => true;
-            }
-            return c => c.GroupId == child.GroupId;
-        }
-        private Expression<Func<ChildAttendance, bool>> ChildAttendanceCondition(Child? child)
-        {
-            if (child == null)
-            {
-                return c => true;
-            }
-            return c => c.ChildId == child.Id;
-        }
-        private Expression<Func<Child, bool>> ChildCondition(Child? child)
-        {
-            if (child == null)
-            {
-                return c => true;
-            }
-            return c => c.Id == child.Id;
         }
     }
 }

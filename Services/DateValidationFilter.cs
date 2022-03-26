@@ -3,41 +3,51 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Rollcall.Services
 {
-    public class DateValidationFilter : IActionFilter
+    public class DateValidationFilterBase 
     {
-        private readonly ILogger<DateValidationFilter> _logger;
-        public DateValidationFilter(ILogger<DateValidationFilter> logger)
-        {
-            _logger = logger;
-        }
-        public void OnActionExecuting(ActionExecutingContext context)
+        protected DateTime? parseContext(ActionExecutingContext context)
         {
             var parameters = context.ActionArguments;
-            if (!parameters.ContainsKey("year")|| !parameters.ContainsKey("month"))
+            if (!parameters.ContainsKey("year") || !parameters.ContainsKey("month"))
             {
-                _logger.LogInformation("Incomplete date provided");
                 context.Result = new BadRequestResult();
-                return;
+                return null;
             }
             int year = (int)parameters["year"];
             int month = (int)parameters["month"];
             int day = parameters.ContainsKey("day") ? (int)parameters["day"] : 1;
-            _logger.LogInformation($"DateValidationService: {day}/{month}/{year}");
             try
             {
                 var date = new DateTime(year, month, day);
-                if (date > DateTime.Now)
-                {
-                    context.Result = new BadRequestResult();
-                    return;
-                }
+                return date;
             }
             catch (ArgumentOutOfRangeException e)
+            {
+                context.Result = new BadRequestResult();
+            }
+            return null;
+        }
+    }
+    public class DateValidationFilter : DateValidationFilterBase, IActionFilter
+    {
+        public void OnActionExecuting(ActionExecutingContext context)
+        {
+            var date = parseContext(context);
+        }
+        public void OnActionExecuted(ActionExecutedContext context) { }
+    }
+    public class FutureDateValidationFilter : DateValidationFilterBase, IActionFilter
+    {
+        public void OnActionExecuting(ActionExecutingContext context)
+        {
+            var date = parseContext(context);
+            if (date > DateTime.Now)
             {
                 context.Result = new BadRequestResult();
                 return;
             }
         }
-        public void OnActionExecuted(ActionExecutedContext context) { }
+        public void OnActionExecuted(ActionExecutedContext context){}
+
     }
 }

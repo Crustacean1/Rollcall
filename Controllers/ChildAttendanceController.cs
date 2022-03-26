@@ -24,16 +24,16 @@ namespace Rollcall.Controllers
         }
 
         [HttpGet, Authorize]
-        [Route("summary/{childId}/{year}/{month}")]
+        [Route("count/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<AttendanceSummaryDto> GetMonthlySummary(int childId, int year, int month)
+        public ActionResult<AttendanceCountDto> GetMonthlyCount(int childId, int year, int month)
         {
             var child = _childRepo.GetChild(childId);
             if (child == null)
             {
                 return NotFound();
             }
-            var result = _attendanceService.GetMonthlySummary(child, year, month);
+            var result = _attendanceService.GetMonthlyCount(child, year, month);
             return Ok(result);
         }
 
@@ -59,12 +59,12 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-            return Ok(_attendanceService.GetDailyAttendance(child, year, month, day));
+            return Ok(_attendanceService.GetDailyAttendance(child, year, month));
         }
 
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
-        [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(FutureDateValidationFilter))]
         public async Task<ActionResult<List<DayAttendanceDto>>> SetAttendance(int childId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
             var child = _childRepo.GetChild(childId);
@@ -72,9 +72,17 @@ namespace Rollcall.Controllers
             {
                 return NotFound();
             }
-
             var result = await _attendanceService.SetAttendance(child, dto, year, month, day);
             return Ok(result);
+        }
+
+        [HttpPost, Authorize]
+        [Route("extend/{year}/{month}")]
+        public async Task<ActionResult<ExtendResultDto>> ExtendChildrenAttendance(int year, int month)
+        {
+            var children = _childRepo.GetChildrenByGroup(0);
+            var updated = await _attendanceService.ExtendAttendance(children, year, month);
+            return new ExtendResultDto { Updated = updated };
         }
     }
 }

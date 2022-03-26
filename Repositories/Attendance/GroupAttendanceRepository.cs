@@ -3,7 +3,7 @@ using Rollcall.Models;
 
 namespace Rollcall.Repositories
 {
-    public class GroupAttendanceRepository : AttendanceRepositoryBase
+    public class GroupAttendanceRepository : MonthlyAttendanceRepository
     {
         public GroupAttendanceRepository(RepositoryContext context) : base(context) { }
         public IEnumerable<AttendanceEntity> GetAttendance(Group? target, bool masked, int year, int month)
@@ -36,20 +36,6 @@ namespace Rollcall.Repositories
             });
             return result;
         }
-        public IEnumerable<AttendanceEntity> GetSplitSummary(Group? target, int year, int month, int day = 0)
-        {
-            var attendance = GetMaskedQuery(target, year, month, day);
-            var result = attendance.GroupBy(a => new { a.ChildId, a.MealName })
-            .Select(a => new AttendanceEntity
-            {
-                Present = a.Count(q => !q.Masked),
-                Date = new MealDate(year, month, day),
-                Name = a.Key.MealName,
-                ChildId = a.Key.ChildId
-            });
-            return result;
-        }
-
         public bool SetGroupAttendance(Group? target, int mealId, bool present, MealDate date)
         {
             if (target == null)
