@@ -50,6 +50,16 @@ namespace Rollcall.Controllers
             var result = _attendanceService.GetMonthlySummary(year, month);
             return result.ToList();
         }
+        [HttpGet, Authorize]
+        [Route("summary/{groupId}/{year}/{month}/{day}")]
+        [ServiceFilter(typeof(DateValidationFilter))]
+        public ActionResult<IEnumerable<ChildAttendanceSummaryDto>> GetDailySummary(int groupId, int year, int month, int day)
+        {
+            var group = _groupRepo.GetGroup(groupId);
+            if (group == null) { return NotFound(); }
+            var result = _attendanceService.GetDailySummary(group, year, month, day);
+            return result.ToList();
+        }
 
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}")]
@@ -69,9 +79,10 @@ namespace Rollcall.Controllers
             var result = _attendanceService.GetMonthlyAttendance(group, year, month);
             return Ok(result);
         }
+
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}/{day}")]
-        public ActionResult<DayAttendanceDto> GetDailySummary(int groupId, int year, int month, int day)
+        public ActionResult<DayAttendanceDto> GetDailyCount(int groupId, int year, int month, int day)
         {
             Group? group = null;
             if (groupId != 0)

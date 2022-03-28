@@ -48,6 +48,5 @@ namespace Rollcall.Services
             }
         }
         public void OnActionExecuted(ActionExecutedContext context){}
-
     }
 }

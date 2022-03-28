@@ -45,8 +45,15 @@ namespace Rollcall.Services
             var result = _dtoShaper.CreateMonthlyCount(attendanceData);
             return result;
         }
-        public IEnumerable<ChildAttendanceSummaryDto> GetMonthlySummary(int year,int month){
-            var attendanceData = _summaryRepo.GetMonthlySummary(year,month);
+        public IEnumerable<ChildAttendanceSummaryDto> GetMonthlySummary(int year, int month)
+        {
+            var attendanceData = _summaryRepo.GetMonthlySummary(year, month);
+            var result = _dtoShaper.CreateMonthlySummary(attendanceData);
+            return result;
+        }
+        public IEnumerable<ChildAttendanceSummaryDto> GetDailySummary(Group group, int year, int month, int day)
+        {
+            var attendanceData = _summaryRepo.GetDailyList(group, new MealDate(year, month, day));
             var result = _dtoShaper.CreateMonthlySummary(attendanceData);
             return result;
         }

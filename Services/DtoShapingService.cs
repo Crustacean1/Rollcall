@@ -25,12 +25,15 @@ namespace Rollcall.Services
             }
             return result;
         }
-        public IEnumerable<ChildAttendanceSummaryDto> CreateMonthlySummary(IEnumerable<ChildAttendanceEntity> attendance){
-            return attendance.GroupBy(a => new {a.ChildId,a.Name,a.Surname}).Select(c => new ChildAttendanceSummaryDto{
-                Name = c.Key.Name,
-                Surname = c.Key.Surname,
+        public IEnumerable<ChildAttendanceSummaryDto> CreateMonthlySummary(IEnumerable<ChildAttendanceEntity> attendance)
+        {
+            return attendance.GroupBy(a => new { a.ChildId }).Select(c => new ChildAttendanceSummaryDto
+            {
+                Name = c.First().Name,
+                Surname = c.First().Surname,
+                GroupName = c.First().GroupName,
                 ChildId = c.Key.ChildId,
-                Summary = c.ToDictionary(m => m.MealName,m => m.Present)
+                Summary = c.ToDictionary(m => m.MealName, m => m.Present)
             });
         }
         public DayAttendanceDto CreateDailyAttendance(IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
