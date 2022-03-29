@@ -52,7 +52,7 @@ namespace Rollcall.Repositories
             int successfullUpdates = 0;
             foreach (var child in children)
             {
-                if (GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id).FirstOrDefault() == null)
+                if (GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id && c.Date.Year == year && c.Date.Month == month).FirstOrDefault() == null)
                 {
                     ExtendAttendance(child, year, month);
                     ++successfullUpdates;

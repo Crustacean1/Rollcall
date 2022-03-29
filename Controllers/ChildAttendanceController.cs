@@ -78,6 +78,7 @@ namespace Rollcall.Controllers
 
         [HttpPost, Authorize]
         [Route("extend/{year}/{month}")]
+        [ServiceFilter(typeof(FutureDateValidationFilter))]
         public async Task<ActionResult<ExtendResultDto>> ExtendChildrenAttendance(int year, int month)
         {
             var children = _childRepo.GetChildrenByGroup(0);
