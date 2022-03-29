@@ -36,6 +36,23 @@ namespace Rollcall.Services
                 Summary = c.ToDictionary(m => m.MealName, m => m.Present)
             });
         }
+        public IEnumerable<DailyChildAttendanceDto> CreateDailySummary(IEnumerable<ChildAttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
+        {
+            var maskLookup = masks.ToDictionary(m => m.Name, m => m.Masked);
+            return attendance.GroupBy(a => new { a.ChildId, a.Name, a.Surname, a.GroupName })
+            .Select(c => new DailyChildAttendanceDto
+            {
+                Name = c.Key.Name,
+                Surname = c.Key.Surname,
+                GroupName = c.Key.GroupName,
+                ChildId = c.Key.ChildId,
+                Meals = c.ToDictionary(p => p.MealName, p => new MealAttendanceDto
+                {
+                    Present = p.Present,
+                    Masked = maskLookup.ContainsKey(p.MealName) ? maskLookup[p.MealName] : false
+                })
+            });
+        }
         public DayAttendanceDto CreateDailyAttendance(IEnumerable<AttendanceEntity> attendance, IEnumerable<MaskEntity> masks)
         {
             var result = GetDefaultDayAttendance();

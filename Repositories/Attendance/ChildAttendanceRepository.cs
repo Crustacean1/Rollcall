@@ -54,7 +54,7 @@ namespace Rollcall.Repositories
             {
                 if (GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id).FirstOrDefault() == null)
                 {
-                    ExtendAttendance(child, month, year);
+                    ExtendAttendance(child, year, month);
                     ++successfullUpdates;
                 }
             }
@@ -63,11 +63,12 @@ namespace Rollcall.Repositories
         private bool ExtendAttendance(Child child, int year, int month)
         {
             var defaultAttendance = child.DefaultMeals;
-            if(defaultAttendance == null){return false;}
+            if (defaultAttendance == null) { return false; }
 
             var newAttendances = new List<ChildAttendance>();
-            for (int i = 0; i < DateTime.DaysInMonth(year, month); ++i)
+            for (var date = new DateTime(year, month, 1); date.Month == month; date = date.AddDays(1))
             {
+                if (date.DayOfWeek == DayOfWeek.Sunday || date.DayOfWeek == DayOfWeek.Saturday) { continue; }
                 foreach (var meal in defaultAttendance)
                 {
                     newAttendances.Add(new ChildAttendance
@@ -75,7 +76,7 @@ namespace Rollcall.Repositories
                         ChildId = child.Id,
                         MealId = meal.MealId,
                         Attendance = meal.Attendance,
-                        Date = new DateTime(year, month, i + 1)
+                        Date = new DateTime(date.Year, date.Month, date.Day)
                     });
                 }
             }

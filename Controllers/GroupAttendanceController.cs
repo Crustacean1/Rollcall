@@ -53,7 +53,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("summary/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<IEnumerable<ChildAttendanceSummaryDto>> GetDailySummary(int groupId, int year, int month, int day)
+        public ActionResult<IEnumerable<DailyChildAttendanceDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
             var group = _groupRepo.GetGroup(groupId);
             if (group == null) { return NotFound(); }

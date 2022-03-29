@@ -51,10 +51,11 @@ namespace Rollcall.Services
             var result = _dtoShaper.CreateMonthlySummary(attendanceData);
             return result;
         }
-        public IEnumerable<ChildAttendanceSummaryDto> GetDailySummary(Group group, int year, int month, int day)
+        public IEnumerable<DailyChildAttendanceDto> GetDailySummary(Group group, int year, int month, int day)
         {
             var attendanceData = _summaryRepo.GetDailyList(group, new MealDate(year, month, day));
-            var result = _dtoShaper.CreateMonthlySummary(attendanceData);
+            var maskData = _maskRepo.GetMasks(group, year, month, day);
+            var result = _dtoShaper.CreateDailySummary(attendanceData, maskData);
             return result;
         }
         public async Task<List<AttendanceRequestDto>> SetAttendance(Group? target, List<AttendanceRequestDto> dto, MealDate date)
