@@ -1,0 +1,16 @@
+version: "1.0"
+services:
+  rollcall:
+    build: .
+    ports:
+      - 5000:5000
+    depends_on: 
+      - rollcalldb
+  rollcalldb:
+    image: rollcalldb
+    volumes:
+      - rollcall_db_volume:/var/lib/mysql
+    ports:
+      - 3306:3306
+volumes:
+  rollcall_db_volume:

@@ -1,12 +1,10 @@
 using Rollcall.Repositories;
 using Rollcall.Services;
 using Rollcall.Models;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
 class Program
 {
     static private WebApplicationBuilder? builder;
@@ -64,12 +62,6 @@ class Program
     static public void ConfigureServices()
     {
         if (builder == null) { return; }
-        builder.Services.AddSingleton<SchemaService>(o =>
-        new SchemaService(new MealSchema[]{
-            new MealSchema{Name ="breakfast", Id = 1},
-            new MealSchema{Name ="dinner", Id = 2},
-            new MealSchema{Name ="desert", Id = 3}})
-        );
 
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<FutureDateValidationFilter>();

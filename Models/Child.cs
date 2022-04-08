@@ -11,6 +11,6 @@ namespace Rollcall.Models
 
         public int GroupId { get; set; }
         [ForeignKey("GroupId")]
-        public Group? MyGroup { get; set; }
+        public Group MyGroup { get; set; }
     }
 }

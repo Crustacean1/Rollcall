@@ -6,13 +6,11 @@ namespace Rollcall.Services
     public class DtoShapingService
     {
         private readonly ILogger<DtoShapingService> _logger;
-        private readonly SchemaService _schemaService;
         private readonly DayAttendanceDto _defaultDay;
         private readonly AttendanceCountDto _defaultCount;
-        public DtoShapingService(ILogger<DtoShapingService> logger, SchemaService schemaService)
+        public DtoShapingService(ILogger<DtoShapingService> logger)
         {
             _logger = logger;
-            _schemaService = schemaService;
             _defaultDay = CreateDefaultDayAttendance();
             _defaultCount = CreateDefaultCount();
         }
@@ -107,7 +105,7 @@ namespace Rollcall.Services
         private AttendanceCountDto CreateDefaultCount()
         {
             var result = new Dictionary<string, int>();
-            var keys = _schemaService.GetNames();
+            var keys = new List<string> { "j", "p", "2" };//_schemaService.GetNames();
             foreach (var name in keys)
             {
                 result[name] = 0;
@@ -120,7 +118,7 @@ namespace Rollcall.Services
         private DayAttendanceDto CreateDefaultDayAttendance()
         {
             var result = new Dictionary<string, MealAttendanceDto>();
-            var keys = _schemaService.GetNames();
+            var keys = new List<string> { "j", "p", "2" };//_schemaService.GetNames();
             foreach (var name in keys)
             {
                 result[name] = new MealAttendanceDto { Present = 0, Masked = false };

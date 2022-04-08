@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
-using Rollcall.Repositories;
 using Rollcall.Models;
 using Rollcall.Services;
 
@@ -11,125 +11,82 @@ namespace Rollcall.Controllers
     [Route("[controller]")]
     public class ChildController : ControllerBase
     {
-        private readonly ChildRepository _childRepository;
-        private readonly SchemaService _schemaService;
+        private readonly ChildService _childService;
         private readonly ILogger<ChildController> _logger;
 
-        private Child Parse(ChildDto dto)
-        {
-            var defaultAttendance = new List<DefaultAttendance>();
-            foreach (var meal in dto.DefaultAttendance)
-            {
-                defaultAttendance.Add(new DefaultAttendance
-                {
-                    MealId = _schemaService.Translate(meal.Key),
-                    Attendance = meal.Value
-                });
-            }
-            return new Child
-            {
-                Name = dto.Name,
-                Surname = dto.Surname,
-                DefaultMeals = defaultAttendance,
-                GroupId = dto.GroupId
-            };
-        }
-        private ChildDto Marshall(Child child)
-        {
-            var list = child.DefaultMeals.ToList();
-            return new ChildDto
-            {
-                GroupName = child.MyGroup.Name,
-                Name = child.Name,
-                Surname = child.Surname,
-                DefaultAttendance = child.DefaultMeals.ToDictionary(
-                   d => _schemaService.Translate(d.MealId),
-                d => d.Attendance
-                ),
-                GroupId = child.GroupId,
-                Id = child.Id
-            };
-        }
-
-        public ChildController(ILogger<ChildController> logger, ChildRepository childRepository,
-         SchemaService schemaService,
-         GroupRepository groupRepository)
+        public ChildController(ILogger<ChildController> logger, ChildService childService)
         {
             _logger = logger;
-            _childRepository = childRepository;
-            _schemaService = schemaService;
+            _childService = childService;
         }
 
         [HttpGet, Authorize]
         [Route("{childId}")]
         public ActionResult<ChildDto> GetChild(int childId)
         {
-            var child = _childRepository.GetChild(childId);
-            if (child == null)
+            var child = _childService.GetChildDto(childId);
+            if (child is null)
             {
                 return NotFound();
             }
-            return Ok(Marshall(child));
+            return Ok(child);
         }
 
         [HttpGet, Authorize]
         [Route("group/{groupId}")]
         public ActionResult<ICollection<ChildDto>> GetChildren(int groupId)
         {
-            ICollection<Child> children;
-            children = _childRepository.GetChildrenByGroup(groupId);
-
-            return Ok(children.Select(child => Marshall(child)).ToList());
+            var children = _childService.GetChildrenFromGroup(groupId);
+            if (children is null)
+            {
+                return NotFound();
+            }
+            return Ok(children);
         }
 
-        [HttpGet, Authorize]
-        public ActionResult<ICollection<ChildDto>> GetChildren()
-        {
-            var children = _childRepository.GetChildrenByGroup().ToList();
-
-            return Ok(children.Select(child => Marshall(child)).ToList());
-        }
         [HttpPost, Authorize]
-        public async Task<ActionResult<int[]>> AddChildren([FromBody] ICollection<ChildDto> childrenDto)
+        public async Task<ActionResult<int>> AddChildren([FromBody] ChildCreationDto childrenDto)
         {
-            _logger.LogInformation("Adding children");
-            var children = childrenDto.Select(e => Parse(e));
-            _childRepository.AddChildren(children);
-            await _childRepository.SaveChangesAsync();
-            return Ok(children.Select(c => c.Id));
+            var child = await _childService.AddChild(childrenDto);
+            if (child is null)
+            {
+                return BadRequest("Invalid child data specified");
+            }
+            return Ok(child.Id);
         }
-        [HttpPost, Authorize]
-        [Route("attendance/{childId}")]
-        public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IEnumerable<AttendanceRequestDto> update)
+
+        [HttpPatch, Authorize]
+        [Route("{childId}")]
+        public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IDictionary<string, bool> update)
         {
-            var child = _childRepository.GetChild(childId,true);
+            var newDefault = _childService.UpdateChild(childId, update);
+            if (newDefault is null)
+            {
+                return NotFound();
+            }
+            return Ok(newDefault);
+        }
+        [HttpPut, Authorize]
+        [Route("{childId}")]
+        public async Task<ActionResult<ChildResponseDto>> UpdateChild(int childId, ChildUpdateDto dto)
+        {
+            var child = _childService.UpdateChild(childId, dto);
             if (child == null)
             {
                 return NotFound();
             }
-            var results = new List<AttendanceRequestDto>();
-            foreach (var mealUpdate in update)
-            {
-                var currentId = _schemaService.Translate(mealUpdate.Name);
-                _logger.LogInformation($"Adding entry: {mealUpdate.Name}");
-                await _childRepository.AddDefaultMeal(child, new DefaultAttendance { MealId = currentId, Attendance = mealUpdate.Present });
-            }
-            return child.DefaultMeals
-            .Select(m => new AttendanceRequestDto { Name = _schemaService.Translate(m.MealId), Present = m.Attendance }).ToList();
+            return Ok(child);
         }
 
         [HttpDelete, Authorize]
-        [Route("{Id}")]
-        public async Task<ActionResult> RemoveChildren(int Id)
+        [Route("{childId}")]
+        public async Task<ActionResult> RemoveChildren(int childId)
         {
-            _logger.LogInformation($"Deleting children with ID {Id}");
-            var child = _childRepository.GetChild(Id);
-            if (child == null)
+            var isRemoved = await _childService.RemoveChild(childId);
+            if (!isRemoved)
             {
                 return NotFound();
             }
-            _childRepository.RemoveChild(child);
-            await _childRepository.SaveChangesAsync();
             return NoContent();
         }
     }

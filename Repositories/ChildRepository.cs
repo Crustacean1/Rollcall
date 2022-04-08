@@ -25,12 +25,14 @@ namespace Rollcall.Repositories
             var query = track ? _context.Children : _context.Children.AsNoTracking();
             return query.Include(c => c.MyGroup)
             .Include(c => c.DefaultMeals)
+            .ThenInclude(d => d.Schema)
             .ToList();
         }
-        public void AddChildren(IEnumerable<Child> children)
+        public void AddChild(Child child)
         {
-            _context.Children.AddRange(children);
+            _context.Children.Add(child);
         }
+
         public async Task AddDefaultMeal(Child child, DefaultAttendance attendance)
         {
             attendance.ChildId = child.Id;

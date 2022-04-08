@@ -8,15 +8,13 @@ namespace Rollcall.Services
         private readonly ChildAttendanceRepository _childRepo;
         private readonly ChildMaskRepository _maskRepo;
         private readonly DtoShapingService _dtoShaper;
-        private readonly SchemaService _schemaService;
         private readonly ILogger<ChildAttendanceService> _logger;
-        public ChildAttendanceService(ChildAttendanceRepository childRepo, ChildMaskRepository maskRepo, DtoShapingService dtoShaper, SchemaService schemaService,
+        public ChildAttendanceService(ChildAttendanceRepository childRepo, ChildMaskRepository maskRepo, DtoShapingService dtoShaper,
         ILogger<ChildAttendanceService> logger)
         {
             _childRepo = childRepo;
             _maskRepo = maskRepo;
             _dtoShaper = dtoShaper;
-            _schemaService = schemaService;
             _logger = logger;
         }
         public DayAttendanceDto GetDailyAttendance(Child child, int year, int month)
@@ -45,7 +43,7 @@ namespace Rollcall.Services
         public async Task<List<AttendanceRequestDto>> SetAttendance(Child child, List<AttendanceRequestDto> dto, int year, int month, int day)
         {
             var updatedAttendance = new List<AttendanceRequestDto>();
-            foreach (var meal in dto)
+            /*foreach (var meal in dto)
             {
                 _logger.LogInformation("Updating child");
                 var mealResult = _childRepo.SetAttendance(child, _schemaService.Translate(meal.Name), meal.Present, year, month, day);
@@ -54,12 +52,13 @@ namespace Rollcall.Services
                     Name = meal.Name,
                     Present = mealResult
                 });
-            }
+            }*/
             await _childRepo.SaveChangesAsync();
             return updatedAttendance;
         }
-        public async Task<int> ExtendAttendance(IEnumerable<Child> children,int year,int month){
-            var updatedAttendances = _childRepo.ExtendAttendance(children,year,month);
+        public async Task<int> ExtendAttendance(IEnumerable<Child> children, int year, int month)
+        {
+            var updatedAttendances = _childRepo.ExtendAttendance(children, year, month);
             await _childRepo.SaveChangesAsync();
             return updatedAttendances;
         }
