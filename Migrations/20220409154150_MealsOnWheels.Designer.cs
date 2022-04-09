@@ -11,8 +11,8 @@ using Rollcall.Repositories;
 namespace rollcall.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20220225113615_InitialChildData")]
-    partial class InitialChildData
+    [Migration("20220409154150_MealsOnWheels")]
+    partial class MealsOnWheels
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -21,38 +21,21 @@ namespace rollcall.Migrations
                 .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("Rollcall.Models.Attendance", b =>
-                {
-                    b.Property<int>("ChildId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<int>("Meals")
-                        .HasColumnType("int");
-
-                    b.HasKey("ChildId", "Date");
-
-                    b.ToTable("Attendance");
-                });
-
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("DefaultMeals")
-                        .HasColumnType("int");
-
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Surname")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -65,10 +48,68 @@ namespace rollcall.Migrations
                         new
                         {
                             Id = 1,
-                            DefaultMeals = 3,
                             GroupId = 1,
                             Name = "Kamil",
                             Surname = "Kowalski"
+                        });
+                });
+
+            modelBuilder.Entity("Rollcall.Models.ChildAttendance", b =>
+                {
+                    b.Property<int>("ChildId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("Attendance")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("ChildId", "MealName", "Date");
+
+                    b.HasIndex("MealName");
+
+                    b.ToTable("ChildAttendance");
+                });
+
+            modelBuilder.Entity("Rollcall.Models.DefaultAttendance", b =>
+                {
+                    b.Property<int>("ChildId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("Attendance")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("ChildId", "MealName");
+
+                    b.HasIndex("MealName");
+
+                    b.ToTable("DefaultAttendance");
+
+                    b.HasData(
+                        new
+                        {
+                            ChildId = 1,
+                            MealName = "breakfast",
+                            Attendance = true
+                        },
+                        new
+                        {
+                            ChildId = 1,
+                            MealName = "dinner",
+                            Attendance = true
+                        },
+                        new
+                        {
+                            ChildId = 1,
+                            MealName = "desert",
+                            Attendance = false
                         });
                 });
 
@@ -94,29 +135,31 @@ namespace rollcall.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Rollcall.Models.Mask", b =>
+            modelBuilder.Entity("Rollcall.Models.GroupAttendance", b =>
                 {
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
 
-                    b.Property<int>("Meals")
-                        .HasColumnType("int");
+                    b.Property<bool>("Attendance")
+                        .HasColumnType("tinyint(1)");
 
-                    b.HasKey("GroupId", "Date");
+                    b.HasKey("GroupId", "MealName", "Date");
 
-                    b.ToTable("Masks");
+                    b.HasIndex("MealName");
+
+                    b.ToTable("GroupAttendance");
                 });
 
             modelBuilder.Entity("Rollcall.Models.MealSchema", b =>
                 {
                     b.Property<string>("Name")
                         .HasColumnType("varchar(255)");
-
-                    b.Property<int>("Mask")
-                        .HasColumnType("int");
 
                     b.HasKey("Name");
 
@@ -125,18 +168,15 @@ namespace rollcall.Migrations
                     b.HasData(
                         new
                         {
-                            Name = "breakfast",
-                            Mask = 1
+                            Name = "breakfast"
                         },
                         new
                         {
-                            Name = "dinner",
-                            Mask = 2
+                            Name = "dinner"
                         },
                         new
                         {
-                            Name = "desert",
-                            Mask = 4
+                            Name = "desert"
                         });
                 });
 
@@ -163,17 +203,6 @@ namespace rollcall.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.Attendance", b =>
-                {
-                    b.HasOne("Rollcall.Models.Child", "TargetChild")
-                        .WithMany("MyAttendance")
-                        .HasForeignKey("ChildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TargetChild");
-                });
-
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
                     b.HasOne("Rollcall.Models.Group", "MyGroup")
@@ -185,20 +214,66 @@ namespace rollcall.Migrations
                     b.Navigation("MyGroup");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.Mask", b =>
+            modelBuilder.Entity("Rollcall.Models.ChildAttendance", b =>
                 {
-                    b.HasOne("Rollcall.Models.Group", "MaskedGroup")
+                    b.HasOne("Rollcall.Models.Child", "TargetChild")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rollcall.Models.MealSchema", "Schema")
+                        .WithMany()
+                        .HasForeignKey("MealName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schema");
+
+                    b.Navigation("TargetChild");
+                });
+
+            modelBuilder.Entity("Rollcall.Models.DefaultAttendance", b =>
+                {
+                    b.HasOne("Rollcall.Models.Child", "TargetChild")
+                        .WithMany("DefaultMeals")
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rollcall.Models.MealSchema", "Schema")
+                        .WithMany()
+                        .HasForeignKey("MealName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schema");
+
+                    b.Navigation("TargetChild");
+                });
+
+            modelBuilder.Entity("Rollcall.Models.GroupAttendance", b =>
+                {
+                    b.HasOne("Rollcall.Models.Group", "TargetGroup")
                         .WithMany("Masks")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("MaskedGroup");
+                    b.HasOne("Rollcall.Models.MealSchema", "Schema")
+                        .WithMany()
+                        .HasForeignKey("MealName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schema");
+
+                    b.Navigation("TargetGroup");
                 });
 
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
-                    b.Navigation("MyAttendance");
+                    b.Navigation("DefaultMeals");
                 });
 
             modelBuilder.Entity("Rollcall.Models.Group", b =>

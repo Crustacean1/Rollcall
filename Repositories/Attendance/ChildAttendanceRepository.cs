@@ -15,11 +15,11 @@ namespace Rollcall.Repositories
             var childAttendance = GetSetWhere<ChildAttendance>(c => c.ChildId == child.Id)
             .Where(a => a.Date.Year == year && a.Date.Month == month);
 
-            var result = childAttendance.Join(_context.Set<MealSchema>(), c => c.MealId, s => s.Id, (e, s) => new AttendanceEntity
+            var result = childAttendance.Select(a => new AttendanceEntity
             {
-                Name = s.Name,
-                Present = e.Attendance ? 1 : 0,
-                Date = new MealDate { Year = year, Month = month, Day = e.Date.Day }
+                Name = a.MealName,
+                Present = a.Attendance ? 1 : 0,
+                Date = new MealDate { Year = year, Month = month, Day = a.Date.Day }
             });
             return result;
         }
@@ -66,6 +66,7 @@ namespace Rollcall.Repositories
             if (defaultAttendance == null) { return false; }
 
             var newAttendances = new List<ChildAttendance>();
+
             for (var date = new DateTime(year, month, 1); date.Month == month; date = date.AddDays(1))
             {
                 if (date.DayOfWeek == DayOfWeek.Sunday || date.DayOfWeek == DayOfWeek.Saturday) { continue; }
@@ -74,7 +75,7 @@ namespace Rollcall.Repositories
                     newAttendances.Add(new ChildAttendance
                     {
                         ChildId = child.Id,
-                        MealId = meal.MealId,
+                        MealName = meal.MealName,
                         Attendance = meal.Attendance,
                         Date = new DateTime(date.Year, date.Month, date.Day)
                     });
@@ -84,10 +85,10 @@ namespace Rollcall.Repositories
             return true;
         }
 
-        public bool SetAttendance(Child target, int mealId, bool present, int year, int month, int day)
+        public bool SetAttendance(Child target, string mealName, bool present, int year, int month, int day)
         {
             var attendance = _context.Set<ChildAttendance>()
-            .Where(c => c.ChildId == target.Id && c.Date == new DateTime(year, month, day) && c.MealId == mealId)
+            .Where(c => c.ChildId == target.Id && c.Date == new DateTime(year, month, day) && c.MealName == mealName)
             .FirstOrDefault();
             if (attendance != null)
             {
@@ -100,7 +101,7 @@ namespace Rollcall.Repositories
                     Date = new DateTime(year, month, day),
                     Attendance = present,
                     ChildId = target.Id,
-                    MealId = mealId
+                    MealName = mealName
                 };
                 _context.ChildAttendance.Add(attendance);
             }

@@ -29,9 +29,11 @@ namespace rollcall.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Surname")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -55,8 +57,8 @@ namespace rollcall.Migrations
                     b.Property<int>("ChildId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MealId")
-                        .HasColumnType("int");
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
@@ -64,9 +66,9 @@ namespace rollcall.Migrations
                     b.Property<bool>("Attendance")
                         .HasColumnType("tinyint(1)");
 
-                    b.HasKey("ChildId", "MealId", "Date");
+                    b.HasKey("ChildId", "MealName", "Date");
 
-                    b.HasIndex("MealId");
+                    b.HasIndex("MealName");
 
                     b.ToTable("ChildAttendance");
                 });
@@ -76,15 +78,15 @@ namespace rollcall.Migrations
                     b.Property<int>("ChildId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MealId")
-                        .HasColumnType("int");
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool>("Attendance")
                         .HasColumnType("tinyint(1)");
 
-                    b.HasKey("ChildId", "MealId");
+                    b.HasKey("ChildId", "MealName");
 
-                    b.HasIndex("MealId");
+                    b.HasIndex("MealName");
 
                     b.ToTable("DefaultAttendance");
 
@@ -92,19 +94,19 @@ namespace rollcall.Migrations
                         new
                         {
                             ChildId = 1,
-                            MealId = 1,
+                            MealName = "breakfast",
                             Attendance = true
                         },
                         new
                         {
                             ChildId = 1,
-                            MealId = 2,
+                            MealName = "dinner",
                             Attendance = true
                         },
                         new
                         {
                             ChildId = 1,
-                            MealId = 3,
+                            MealName = "desert",
                             Attendance = false
                         });
                 });
@@ -136,8 +138,8 @@ namespace rollcall.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MealId")
-                        .HasColumnType("int");
+                    b.Property<string>("MealName")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
@@ -145,41 +147,33 @@ namespace rollcall.Migrations
                     b.Property<bool>("Attendance")
                         .HasColumnType("tinyint(1)");
 
-                    b.HasKey("GroupId", "MealId", "Date");
+                    b.HasKey("GroupId", "MealName", "Date");
 
-                    b.HasIndex("MealId");
+                    b.HasIndex("MealName");
 
                     b.ToTable("GroupAttendance");
                 });
 
             modelBuilder.Entity("Rollcall.Models.MealSchema", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
-                    b.HasKey("Id");
+                    b.HasKey("Name");
 
                     b.ToTable("MealSchemas");
 
                     b.HasData(
                         new
                         {
-                            Id = 1,
                             Name = "breakfast"
                         },
                         new
                         {
-                            Id = 2,
                             Name = "dinner"
                         },
                         new
                         {
-                            Id = 3,
                             Name = "desert"
                         });
                 });
@@ -221,14 +215,14 @@ namespace rollcall.Migrations
             modelBuilder.Entity("Rollcall.Models.ChildAttendance", b =>
                 {
                     b.HasOne("Rollcall.Models.Child", "TargetChild")
-                        .WithMany("MyAttendance")
+                        .WithMany()
                         .HasForeignKey("ChildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Rollcall.Models.MealSchema", "Schema")
                         .WithMany()
-                        .HasForeignKey("MealId")
+                        .HasForeignKey("MealName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -247,7 +241,7 @@ namespace rollcall.Migrations
 
                     b.HasOne("Rollcall.Models.MealSchema", "Schema")
                         .WithMany()
-                        .HasForeignKey("MealId")
+                        .HasForeignKey("MealName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -266,7 +260,7 @@ namespace rollcall.Migrations
 
                     b.HasOne("Rollcall.Models.MealSchema", "Schema")
                         .WithMany()
-                        .HasForeignKey("MealId")
+                        .HasForeignKey("MealName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -278,8 +272,6 @@ namespace rollcall.Migrations
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
                     b.Navigation("DefaultMeals");
-
-                    b.Navigation("MyAttendance");
                 });
 
             modelBuilder.Entity("Rollcall.Models.Group", b =>

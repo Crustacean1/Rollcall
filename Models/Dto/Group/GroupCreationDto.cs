@@ -1,6 +1,6 @@
 namespace Rollcall.Models
 {
-    public class MealSchema
+    public class GroupCreationDto
     {
         public string Name { get; set; }
     }

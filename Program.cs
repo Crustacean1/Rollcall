@@ -71,6 +71,7 @@ class Program
         builder.Services.AddScoped<ChildAttendanceService>();
         builder.Services.AddScoped<GroupAttendanceService>();
         builder.Services.AddScoped<ChildService>();
+        builder.Services.AddScoped<GroupService>();
     }
     static public void Main(String[] args)
     {

@@ -7,9 +7,9 @@ namespace Rollcall.Models
 
         public Group TargetGroup { get; set; }
         public int GroupId { get; set; }
-        [ForeignKey("MealId")]
+        [ForeignKey("MealName")]
         public MealSchema Schema { get; set; }
-        public int MealId { get; set; }
+        public string MealName { get; set; }
         public bool Attendance { get; set; }
 
         [Column(TypeName = "date")]

@@ -33,6 +33,17 @@ namespace Rollcall.Controllers
         }
 
         [HttpGet, Authorize]
+        public ActionResult<ICollection<ChildDto>> GetChildren()
+        {
+            var children = _childService.GetChildrenFromGroup(0);
+            if (children is null)
+            {
+                return NotFound();
+            }
+            return Ok(children);
+        }
+
+        [HttpGet, Authorize]
         [Route("group/{groupId}")]
         public ActionResult<ICollection<ChildDto>> GetChildren(int groupId)
         {
@@ -54,6 +65,7 @@ namespace Rollcall.Controllers
             }
             return Ok(child.Id);
         }
+
 
         [HttpPatch, Authorize]
         [Route("{childId}")]

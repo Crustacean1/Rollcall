@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Rollcall.Specifications;
 using Rollcall.Models;
 using Rollcall.Repositories;
 using Rollcall.Services;
@@ -28,7 +29,7 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<AttendanceCountDto> GetMonthlyCount(int childId, int year, int month)
         {
-            var child = _childRepo.GetChild(childId);
+            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
             if (child == null)
             {
                 return NotFound();
@@ -42,7 +43,7 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<List<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
-            var child = _childRepo.GetChild(childId);
+            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
             if (child == null)
             {
                 return NotFound();
@@ -54,7 +55,7 @@ namespace Rollcall.Controllers
         [Route("daily/{childId}/{year}/{month}/{day}")]
         public ActionResult<DayAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
-            var child = _childRepo.GetChild(childId);
+            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
             if (child == null)
             {
                 return NotFound();
@@ -67,7 +68,7 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(FutureDateValidationFilter))]
         public async Task<ActionResult<List<DayAttendanceDto>>> SetAttendance(int childId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
         {
-            var child = _childRepo.GetChild(childId);
+            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
             if (child == null)
             {
                 return NotFound();
@@ -81,7 +82,7 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(FutureDateValidationFilter))]
         public async Task<ActionResult<ExtendResultDto>> ExtendChildrenAttendance(int year, int month)
         {
-            var children = _childRepo.GetChildrenByGroup(0);
+            var children = _childRepo.GetChildrenByGroup(new TotalChildGroupSpecification());
             var updated = await _attendanceService.ExtendAttendance(children, year, month);
             return new ExtendResultDto { Updated = updated };
         }

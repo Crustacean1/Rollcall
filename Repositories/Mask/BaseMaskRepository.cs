@@ -17,11 +17,11 @@ namespace Rollcall.Repositories
             var result = _context.Set<GroupAttendance>().AsNoTracking()
             .Where(targetCondition)
             .Where(dateCondition)
-            .Join(_context.Set<MealSchema>().AsNoTracking(), g => g.MealId, s => s.Id, (g, s) => new MaskEntity
+            .Select(g => new MaskEntity
             {
                 Masked = g.Attendance,
                 Date = new MealDate { Year = g.Date.Year, Month = g.Date.Month, Day = g.Date.Day },
-                Name = s.Name
+                Name = g.MealName
             });
             return result;
         }
@@ -35,10 +35,10 @@ namespace Rollcall.Repositories
             .Where(g => g.Attendance);
 
             var result = masks
-            .Join(_context.Set<MealSchema>().AsNoTracking(), a => a.MealId, s => s.Id, (a, s) => new MaskEntity
+            .Select(a => new MaskEntity
             {
                 Masked = a.Attendance,
-                Name = s.Name,
+                Name = a.MealName,
                 Date = new MealDate(a.Date.Year, a.Date.Month, a.Date.Day)
             })
             .GroupBy(m => new { m.Date, m.Name })

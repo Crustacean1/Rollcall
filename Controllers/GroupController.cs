@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-
-using Rollcall.Repositories;
+using Rollcall.Services;
 using Rollcall.Models;
 
 namespace Rollcall.Controllers
@@ -10,57 +9,51 @@ namespace Rollcall.Controllers
     [Route("group")]
     public class GroupController : ControllerBase
     {
-        private readonly GroupRepository _repository;
-        public GroupController(GroupRepository repository)
+        private readonly GroupService _groupService;
+        private readonly ILogger<GroupController> _logger;
+        public GroupController(GroupService groupService, ILogger<GroupController> logger)
         {
-            _repository = repository;
+            _groupService = groupService;
+            _logger = logger;
         }
         [HttpPost, Authorize]
-        public async Task<ActionResult<GroupDto>> AddGroup([FromBody] GroupDto dto)
+        public async Task<ActionResult<GroupDto>> AddGroup([FromBody] GroupCreationDto dto)
         {
-            if (dto.Name == null)
+            var group = await _groupService.CreateGroup(dto);
+            if (group == null)
             {
-                return BadRequest();
+                return BadRequest("Invalid params for group creation, check if such group does not already exist");
             }
-            var prevGroup = _repository.GetGroup(dto.Name);
-            if (prevGroup != null)
-            {
-                return BadRequest();
-            }
-            var group = new Group { Name = dto.Name };
-            _repository.AddGroup(group);
-            await _repository.SaveChangesAsync();
-
-            return CreatedAtAction(null, new GroupDto { Name = group.Name, Id = group.Id });
+            return CreatedAtAction(null, group);
         }
         [HttpGet, Authorize]
         [Route("{groupId}")]
         public ActionResult<GroupDto> GetGroup(int groupId)
         {
-            if (groupId == 0)
-            {
-                return Ok(new GroupDto
-                {
-                    Name = "Wszystkie",
-                    Id = 0
-                });
-            }
-            var group = _repository.GetGroup(groupId);
+            var group = _groupService.GetGroup(groupId);
             if (group == null)
             {
                 return NotFound();
             }
-            return new GroupDto
-            {
-                Name = group.Name,
-                Id = group.Id
-            };
+            return group;
         }
-        [HttpGet, Authorize]
-        public ActionResult<List<GroupResultDto>> GetGroups()
+        [HttpPut, Authorize]
+        [Route("{groupId}")]
+        public async Task<ActionResult<GroupDto>> UpdateGroupName(int groupId, [FromBody] GroupUpdateDto dto)
         {
-            var groups = _repository.GetGroups();
-            return groups.Select(group => new GroupResultDto { Name = group.Name, Id = group.Id }).ToList();
+            var group = await _groupService.RenameGroup(groupId, dto);
+            if (group == null)
+            {
+                return NotFound();
+            }
+            return group;
+        }
+
+        [HttpGet, Authorize]
+        public ActionResult<List<GroupResultDto>> GetAllGroups()
+        {
+            var groups = _groupService.GetAllGroups();
+            return Ok(groups.ToList());
         }
     }
 }

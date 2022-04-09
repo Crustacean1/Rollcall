@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace rollcall.Migrations
 {
-    public partial class BackOnTrack : Migration
+    public partial class MealsOnWheels : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -32,14 +32,12 @@ namespace rollcall.Migrations
                 name: "MealSchemas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MealSchemas", x => x.Id);
+                    table.PrimaryKey("PK_MealSchemas", x => x.Name);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -68,11 +66,10 @@ namespace rollcall.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: true)
+                    Name = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Surname = table.Column<string>(type: "longtext", nullable: true)
+                    Surname = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    DefaultMeals = table.Column<int>(type: "int", nullable: false),
                     GroupId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -88,82 +85,163 @@ namespace rollcall.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Masks",
+                name: "GroupAttendance",
                 columns: table => new
                 {
                     GroupId = table.Column<int>(type: "int", nullable: false),
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Date = table.Column<DateTime>(type: "date", nullable: false),
-                    Meals = table.Column<int>(type: "int", nullable: false)
+                    Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Masks", x => new { x.GroupId, x.Date });
+                    table.PrimaryKey("PK_GroupAttendance", x => new { x.GroupId, x.MealName, x.Date });
                     table.ForeignKey(
-                        name: "FK_Masks_Groups_GroupId",
+                        name: "FK_GroupAttendance_Groups_GroupId",
                         column: x => x.GroupId,
                         principalTable: "Groups",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupAttendance_MealSchemas_MealName",
+                        column: x => x.MealName,
+                        principalTable: "MealSchemas",
+                        principalColumn: "Name",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Attendance",
+                name: "ChildAttendance",
                 columns: table => new
                 {
                     ChildId = table.Column<int>(type: "int", nullable: false),
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Date = table.Column<DateTime>(type: "date", nullable: false),
-                    Meals = table.Column<int>(type: "int", nullable: false)
+                    Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Attendance", x => new { x.ChildId, x.Date });
+                    table.PrimaryKey("PK_ChildAttendance", x => new { x.ChildId, x.MealName, x.Date });
                     table.ForeignKey(
-                        name: "FK_Attendance_Children_ChildId",
+                        name: "FK_ChildAttendance_Children_ChildId",
                         column: x => x.ChildId,
                         principalTable: "Children",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChildAttendance_MealSchemas_MealName",
+                        column: x => x.MealName,
+                        principalTable: "MealSchemas",
+                        principalColumn: "Name",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "DefaultAttendance",
+                columns: table => new
+                {
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChildId = table.Column<int>(type: "int", nullable: false),
+                    Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DefaultAttendance", x => new { x.ChildId, x.MealName });
+                    table.ForeignKey(
+                        name: "FK_DefaultAttendance_Children_ChildId",
+                        column: x => x.ChildId,
+                        principalTable: "Children",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DefaultAttendance_MealSchemas_MealName",
+                        column: x => x.MealName,
+                        principalTable: "MealSchemas",
+                        principalColumn: "Name",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.InsertData(
-                table: "MealSchemas",
+                table: "Groups",
                 columns: new[] { "Id", "Name" },
-                values: new object[] { 1, "breakfast" });
+                values: new object[] { 1, "AEII" });
 
             migrationBuilder.InsertData(
                 table: "MealSchemas",
-                columns: new[] { "Id", "Name" },
-                values: new object[] { 2, "dinner" });
+                column: "Name",
+                values: new object[]
+                {
+                    "breakfast",
+                    "desert",
+                    "dinner"
+                });
 
             migrationBuilder.InsertData(
-                table: "MealSchemas",
-                columns: new[] { "Id", "Name" },
-                values: new object[] { 3, "desert" });
+                table: "Children",
+                columns: new[] { "Id", "GroupId", "Name", "Surname" },
+                values: new object[] { 1, 1, "Kamil", "Kowalski" });
+
+            migrationBuilder.InsertData(
+                table: "DefaultAttendance",
+                columns: new[] { "ChildId", "MealName", "Attendance" },
+                values: new object[] { 1, "breakfast", true });
+
+            migrationBuilder.InsertData(
+                table: "DefaultAttendance",
+                columns: new[] { "ChildId", "MealName", "Attendance" },
+                values: new object[] { 1, "desert", false });
+
+            migrationBuilder.InsertData(
+                table: "DefaultAttendance",
+                columns: new[] { "ChildId", "MealName", "Attendance" },
+                values: new object[] { 1, "dinner", true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChildAttendance_MealName",
+                table: "ChildAttendance",
+                column: "MealName");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Children_GroupId",
                 table: "Children",
                 column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DefaultAttendance_MealName",
+                table: "DefaultAttendance",
+                column: "MealName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupAttendance_MealName",
+                table: "GroupAttendance",
+                column: "MealName");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Attendance");
+                name: "ChildAttendance");
 
             migrationBuilder.DropTable(
-                name: "Masks");
+                name: "DefaultAttendance");
 
             migrationBuilder.DropTable(
-                name: "MealSchemas");
+                name: "GroupAttendance");
 
             migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Children");
+
+            migrationBuilder.DropTable(
+                name: "MealSchemas");
 
             migrationBuilder.DropTable(
                 name: "Groups");

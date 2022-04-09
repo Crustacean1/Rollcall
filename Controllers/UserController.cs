@@ -24,7 +24,6 @@ namespace Rollcall.Controllers
         [HttpPost]
         public async Task<ActionResult> LoginUser([FromBody] UserRegistrationDto userDto)
         {
-            _logger.LogInformation("Reached logging endpoint");
             if (_authService.ShouldRegisterUser(userDto))
             {
                 await _authService.CreateUser(userDto);
