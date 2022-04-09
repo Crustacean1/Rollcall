@@ -9,6 +9,7 @@ namespace Rollcall.Repositories
         {
             var query = track ? _context.Children : _context.Children.AsNoTracking();
             return query.Include(c => c.DefaultMeals)
+            .ThenInclude(m => m.Schema)
             .Include(c => c.MyGroup)
             .Where(child => child.Id == Id).FirstOrDefault();
         }

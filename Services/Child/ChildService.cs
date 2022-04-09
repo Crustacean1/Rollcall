@@ -11,7 +11,7 @@ namespace Rollcall.Services
         GroupRepository _groupRepo;
         MealSchemaRepository _mealRepo;
 
-        ChildService(ChildRepository childRepo,
+        public ChildService(ChildRepository childRepo,
         GroupRepository groupRepo,
         MealSchemaRepository mealRepo,
         ILogger<ChildService> logger)
@@ -46,13 +46,17 @@ namespace Rollcall.Services
             {
                 return null;
             }
+            _logger.LogInformation($"Found child: {child.Name} Surname: {child.Surname}");
+            _logger.LogInformation($"DefaultAttendance size: {child.DefaultMeals.Count()}");
             return new ChildDto
             {
                 Id = child.Id,
                 Name = child.Name,
                 Surname = child.Surname,
                 GroupId = child.GroupId,
-                DefaultAttendance = child.DefaultMeals.ToDictionary(m => m.Schema.Name, m => m.Attendance)
+                DefaultAttendance = (child.DefaultMeals is null) ?
+                new Dictionary<string, bool>() :
+                 child.DefaultMeals.ToDictionary(m => (m.Schema is null) ? $"null{m.MealId.ToString()}" : m.Schema.Name, m => m.Attendance)
             };
         }
         public async Task<ChildResponseDto?> AddChild(ChildCreationDto dto)
@@ -96,7 +100,7 @@ namespace Rollcall.Services
         }
         public async Task<IDictionary<string, bool>?> UpdateChild(int childId, IDictionary<string, bool> newDto)
         {
-            var child = _childRepo.GetChild(childId);
+            var child = _childRepo.GetChild(childId, true);
             if (child is null)
             {
                 _logger.LogError("In ChildService: Cannot update nonexistent child");
@@ -104,7 +108,13 @@ namespace Rollcall.Services
             }
 
             var newAttendance = ParseDefaultAttendance(newDto);
-            child.DefaultMeals = newAttendance;
+            foreach(var meal in newAttendance){
+            }
+
+            foreach (var item in newDto)
+            {
+                _logger.LogInformation($"In update: {item.Key} : {item.Value}");
+            }
 
             if (!HasValidMeal(child))
             {
@@ -112,7 +122,7 @@ namespace Rollcall.Services
             }
 
             await _childRepo.SaveChangesAsync();
-            return child.DefaultMeals.ToDictionary(m => m.Schema.Name, m => m.Attendance);
+            return child.DefaultMeals.ToDictionary(m => (m.Schema is null) ? $"null{m.MealId}" : m.Schema.Name, m => m.Attendance);
         }
         public async Task<bool> RemoveChild(int id)
         {
@@ -143,7 +153,10 @@ namespace Rollcall.Services
         }
         private bool HasValidMeal(Child child)
         {
-            if (child.DefaultMeals is not null && _mealRepo.CheckIfMealsExist(child.DefaultMeals.Select(m => m.MealId)))
+            _logger.LogInformation($"New attendance count: {child.DefaultMeals.Count()}");
+            var difference = _mealRepo.CheckIfMealsExist(child.DefaultMeals.Select(m => m.MealId));
+            _logger.LogInformation($"Difference: {difference}");
+            if (child.DefaultMeals is not null && difference != 0)
             {
                 _logger.LogError("In ChildService: Cannot set default attendance for nonexistent meal");
                 return false;

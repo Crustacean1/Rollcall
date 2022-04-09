@@ -59,18 +59,20 @@ namespace Rollcall.Controllers
         [Route("{childId}")]
         public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IDictionary<string, bool> update)
         {
-            var newDefault = _childService.UpdateChild(childId, update);
+            var newDefault = await _childService.UpdateChild(childId, update);
             if (newDefault is null)
             {
+                _logger.LogInformation("Returning not found");
                 return NotFound();
             }
             return Ok(newDefault);
         }
+
         [HttpPut, Authorize]
         [Route("{childId}")]
         public async Task<ActionResult<ChildResponseDto>> UpdateChild(int childId, ChildUpdateDto dto)
         {
-            var child = _childService.UpdateChild(childId, dto);
+            var child = await _childService.UpdateChild(childId, dto);
             if (child == null)
             {
                 return NotFound();

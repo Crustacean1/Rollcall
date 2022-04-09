@@ -1,4 +1,6 @@
 .git
+.gitignore
+.devcontainer
 .vscode
 obj
 README.md

@@ -19,6 +19,7 @@ class Program
         builder.Services.AddScoped<ChildRepository>();
         builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<GroupRepository>();
+        builder.Services.AddScoped<MealSchemaRepository>();
 
         builder.Services.AddScoped<ChildAttendanceRepository>();
         builder.Services.AddScoped<GroupAttendanceRepository>();
@@ -69,6 +70,7 @@ class Program
         builder.Services.AddScoped<DtoShapingService>();
         builder.Services.AddScoped<ChildAttendanceService>();
         builder.Services.AddScoped<GroupAttendanceService>();
+        builder.Services.AddScoped<ChildService>();
     }
     static public void Main(String[] args)
     {

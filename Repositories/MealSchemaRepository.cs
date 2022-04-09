@@ -9,9 +9,9 @@ namespace Rollcall.Repositories
         {
             return GetSetWhere<MealSchema>(s => mealNames.Contains(s.Name));
         }
-        public bool CheckIfMealsExist(IEnumerable<int> mealIds)
+        public int CheckIfMealsExist(IEnumerable<int> mealIds)
         {
-            return GetSetWhere<MealSchema>(s => mealIds.Contains(s.Id)).Count() == mealIds.Count();
+            return GetSetWhere<MealSchema>(s => mealIds.Contains(s.Id)).Count() - mealIds.Count();
         }
     }
 }
