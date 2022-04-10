@@ -1,0 +1,14 @@
+{
+    "name": "C# (.NET)",
+    "dockerComposeFile": [
+        "../docker/docker-compose.yaml"
+    ],
+    "service": "dev-env",
+    "workspaceFolder": "/workspace",
+    "settings": {},
+    "extensions": [
+        "ms-dotnettools.csharp",
+        "shardulm94.trailing-spaces",
+        "mikestead.dotenv",
+    ],
+}
