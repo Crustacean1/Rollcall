@@ -1,0 +1,23 @@
+version: "1.0"
+services:
+  rollcall:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - 5000:5000
+    depends_on:
+      - rollcalldb
+    volumes:
+      - ./:/Rollcall
+    stdin_open: true
+    tty: true
+  rollcalldb:
+    image: rollcalldb
+    ports:
+      - 3306:3306
+    volumes:
+      - rollcall_db_volume:/var/lib/mysql
+volumes:
+  rollcall_db_volume:

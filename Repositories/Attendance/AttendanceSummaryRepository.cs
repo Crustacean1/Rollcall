@@ -41,7 +41,7 @@ namespace Rollcall.Repositories
             var result = from _children in children
                          from _mealSchema in _context.Set<MealSchema>().AsNoTracking()
                          join _groups in _context.Set<Group>().AsNoTracking() on _children.GroupId equals _groups.Id
-                         join _ca in childAttendance on new { cId = _children.Id, mId = _mealSchema.Id } equals new { cId = _ca.ChildId, mId = _ca.MealId } into _sparseCa
+                         join _ca in childAttendance on new { cId = _children.Id, mName = _mealSchema.Name } equals new { cId = _ca.ChildId, mName = _ca.MealName } into _sparseCa
                          from _childAttendance in _sparseCa.DefaultIfEmpty()
                          group new ChildAttendanceEntry
                          {
@@ -67,9 +67,10 @@ namespace Rollcall.Repositories
             var result = from _children in children
                          from _mealSchema in _context.Set<MealSchema>().AsNoTracking()
                          join _groups in _context.Set<Group>().AsNoTracking() on _children.GroupId equals _groups.Id
-                         join _ca in childAttendance on new { cId = _children.Id, mId = _mealSchema.Id } equals new { cId = _ca.ChildId, mId = _ca.MealId } into _sparseCa
+                         join _ca in childAttendance on new { cId = _children.Id, mName = _mealSchema.Name } equals new { cId = _ca.ChildId, mName = _ca.MealName } into _sparseCa
                          from _childAttendance in _sparseCa.DefaultIfEmpty()
-                         join _ga in groupAttendance on new { _children.GroupId, _childAttendance.Date, _childAttendance.MealId } equals new { _ga.GroupId, _ga.Date, _ga.MealId } into _sparseGa
+                         join _ga in groupAttendance on new { _children.GroupId, _childAttendance.Date, _childAttendance.MealName } equals
+                         new { _ga.GroupId, _ga.Date, _ga.MealName } into _sparseGa
                          from _groupAttendance in _sparseGa.DefaultIfEmpty()
                          group new ChildAttendanceEntry
                          {

@@ -1,3 +1,4 @@
+using Rollcall.Specifications;
 using Microsoft.EntityFrameworkCore;
 using Rollcall.Models;
 namespace Rollcall.Repositories
@@ -5,46 +6,26 @@ namespace Rollcall.Repositories
     public class ChildRepository : RepositoryBase
     {
         public ChildRepository(RepositoryContext context) : base(context) { }
-        public Child? GetChild(int Id, bool track = false)
+        public Child? GetChild(ISpecification<Child> spec)
         {
-            var query = track ? _context.Children : _context.Children.AsNoTracking();
-            return query.Include(c => c.DefaultMeals)
-            .Include(c => c.MyGroup)
-            .Where(child => child.Id == Id).FirstOrDefault();
+            var query = spec.Tracking ? _context.Children : _context.Children.AsNoTracking();
+            var extendedQuery = spec.Includes.Aggregate(query, (q, s) => q.Include(s));
+            var thinnedQuery = extendedQuery.Where(spec.Condition);
+            return thinnedQuery.FirstOrDefault();
         }
 
-        public ICollection<Child> GetChildrenByGroup(int Id, bool track = false)
+        public IEnumerable<Child> GetChildrenByGroup(ISpecification<Child> spec)
         {
-            var query = track ? _context.Children : _context.Children.AsNoTracking();
-            return query.Include(c => c.MyGroup)
-            .Include(c => c.DefaultMeals)
-            .Where(child => (child.GroupId == Id || Id == 0)).ToList();
+            var query = spec.Tracking ? _context.Children : _context.Children.AsNoTracking();
+            var extendedQuery = spec.Includes.Aggregate(query, (q, s) => q.Include(s));
+            var thinnedQuery = extendedQuery.Where(spec.Condition);
+            return thinnedQuery;
         }
-        public ICollection<Child> GetChildrenByGroup(bool track = false)
+        public void AddChild(Child child)
         {
-            var query = track ? _context.Children : _context.Children.AsNoTracking();
-            return query.Include(c => c.MyGroup)
-            .Include(c => c.DefaultMeals)
-            .ToList();
+            _context.Children.Add(child);
         }
-        public void AddChildren(IEnumerable<Child> children)
-        {
-            _context.Children.AddRange(children);
-        }
-        public async Task AddDefaultMeal(Child child, DefaultAttendance attendance)
-        {
-            attendance.ChildId = child.Id;
-            var oldAttendance = child.DefaultMeals.Where(a => a.MealId == attendance.MealId).FirstOrDefault();
-            if (oldAttendance == null)
-            {
-                _context.Set<DefaultAttendance>().Add(attendance);
-            }
-            else
-            {
-                oldAttendance.Attendance = attendance.Attendance;
-            }
-            await SaveChangesAsync();
-        }
+
         public void RemoveChild(Child child)
         {
             _context.Children.Remove(child);

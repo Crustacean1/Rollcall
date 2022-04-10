@@ -6,11 +6,11 @@ namespace Rollcall.Models
     {
         public string Name { get; set; }
         public string Surname { get; set; }
-        public IEnumerable<DefaultAttendance>? DefaultMeals { get; set; }
+        public IEnumerable<DefaultAttendance> DefaultMeals { get; set; }
         public int Id { get; set; }
 
         public int GroupId { get; set; }
         [ForeignKey("GroupId")]
-        public Group? MyGroup { get; set; }
+        public Group MyGroup { get; set; }
     }
 }

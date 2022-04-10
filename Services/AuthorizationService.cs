@@ -21,8 +21,8 @@ namespace Rollcall.Services
         }
         public bool ShouldRegisterUser(UserRegistrationDto userCred)
         {
-            var _user = _repository.GetUserCount();
-            return _user == 0;
+            var userCount = _repository.GetUserCount();
+            return userCount == 0;
         }
         public string? AuthorizeUser(UserRegistrationDto userCred)
         {

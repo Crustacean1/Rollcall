@@ -5,9 +5,9 @@ namespace Rollcall.Models
     {
         public Child TargetChild { get; set; }
         public int ChildId { get; set; }
-        [ForeignKey("MealId")]
+        [ForeignKey("MealName")]
         public MealSchema Schema { get; set; }
-        public int MealId { get; set; }
+        public string MealName { get; set; }
         public bool Attendance { get; set; }
         [Column(TypeName = "date")]
         public DateTime Date { get; set; }

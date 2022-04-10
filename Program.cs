@@ -1,12 +1,10 @@
 using Rollcall.Repositories;
 using Rollcall.Services;
 using Rollcall.Models;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
 class Program
 {
     static private WebApplicationBuilder? builder;
@@ -21,6 +19,7 @@ class Program
         builder.Services.AddScoped<ChildRepository>();
         builder.Services.AddScoped<UserRepository>();
         builder.Services.AddScoped<GroupRepository>();
+        builder.Services.AddScoped<MealSchemaRepository>();
 
         builder.Services.AddScoped<ChildAttendanceRepository>();
         builder.Services.AddScoped<GroupAttendanceRepository>();
@@ -64,12 +63,6 @@ class Program
     static public void ConfigureServices()
     {
         if (builder == null) { return; }
-        builder.Services.AddSingleton<SchemaService>(o =>
-        new SchemaService(new MealSchema[]{
-            new MealSchema{Name ="breakfast", Id = 1},
-            new MealSchema{Name ="dinner", Id = 2},
-            new MealSchema{Name ="desert", Id = 3}})
-        );
 
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<FutureDateValidationFilter>();
@@ -77,6 +70,8 @@ class Program
         builder.Services.AddScoped<DtoShapingService>();
         builder.Services.AddScoped<ChildAttendanceService>();
         builder.Services.AddScoped<GroupAttendanceService>();
+        builder.Services.AddScoped<ChildService>();
+        builder.Services.AddScoped<GroupService>();
     }
     static public void Main(String[] args)
     {

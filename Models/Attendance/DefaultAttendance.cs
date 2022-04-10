@@ -3,9 +3,9 @@ namespace Rollcall.Models
 {
     public class DefaultAttendance
     {
-        [ForeignKey("MealId")]
+        [ForeignKey("MealName")]
         public MealSchema Schema { get; set; }
-        public int MealId { get; set; }
+        public string MealName { get; set; }
         [ForeignKey("ChildId")]
         public Child TargetChild { get; set; }
         public int ChildId { get; set; }

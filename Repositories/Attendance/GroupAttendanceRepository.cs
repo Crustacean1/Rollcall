@@ -36,27 +36,27 @@ namespace Rollcall.Repositories
             });
             return result;
         }
-        public bool SetGroupAttendance(Group? target, int mealId, bool present, MealDate date)
+        public bool SetGroupAttendance(Group? target, string mealName, bool present, MealDate date)
         {
             if (target == null)
             {
-                return SetAttendance(_context.Set<Group>().ToList(), mealId, present, date);
+                return SetAttendance(_context.Set<Group>().ToList(), mealName, present, date);
             }
-            return SetAttendance(target, mealId, present, date);
+            return SetAttendance(target, mealName, present, date);
         }
-        private bool SetAttendance(IEnumerable<Group> targets, int mealId, bool present, MealDate date)
+        private bool SetAttendance(IEnumerable<Group> targets, string mealName, bool present, MealDate date)
         {
             var result = new List<bool>();
             foreach (var target in targets)
             {
-                result.Add(SetAttendance(target, mealId, present, date));
+                result.Add(SetAttendance(target, mealName, present, date));
             }
             return result.All(r => r == true);
         }
-        private bool SetAttendance(Group target, int mealId, bool present, MealDate date)
+        private bool SetAttendance(Group target, string mealName, bool present, MealDate date)
         {
             var attendance = _context.Set<GroupAttendance>()
-            .Where(c => c.MealId == mealId && c.Date == new DateTime(date.Year, date.Month, date.Day) && c.GroupId == target.Id)
+            .Where(c => c.MealName == mealName && c.Date == new DateTime(date.Year, date.Month, date.Day) && c.GroupId == target.Id)
             .FirstOrDefault();
             if (attendance != null)
             {
@@ -66,7 +66,7 @@ namespace Rollcall.Repositories
             {
                 attendance = new GroupAttendance
                 {
-                    MealId = mealId,
+                    MealName = mealName,
                     Date = new DateTime(date.Year, date.Month, date.Day),
                     GroupId = target.Id,
                     Attendance = present

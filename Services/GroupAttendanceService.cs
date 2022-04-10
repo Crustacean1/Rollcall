@@ -9,20 +9,17 @@ namespace Rollcall.Services
         private readonly AttendanceSummaryRepository _summaryRepo;
         private readonly GroupMaskRepository _maskRepo;
         private readonly DtoShapingService _dtoShaper;
-        private readonly SchemaService _schemaService;
         private readonly ILogger<GroupAttendanceService> _logger;
         public GroupAttendanceService(GroupAttendanceRepository groupRepo,
         AttendanceSummaryRepository summaryRepo,
         GroupMaskRepository maskRepo,
         DtoShapingService dtoShaper,
-        SchemaService schemaService,
         ILogger<GroupAttendanceService> logger)
         {
             _maskRepo = maskRepo;
             _summaryRepo = summaryRepo;
             _groupRepo = groupRepo;
             _dtoShaper = dtoShaper;
-            _schemaService = schemaService;
             _logger = logger;
         }
         public MonthlyAttendanceDto GetMonthlyAttendance(Group? target, int year, int month)
@@ -61,7 +58,7 @@ namespace Rollcall.Services
         public async Task<List<AttendanceRequestDto>> SetAttendance(Group? target, List<AttendanceRequestDto> dto, MealDate date)
         {
             var result = new List<AttendanceRequestDto>();
-            foreach (var meal in dto)
+            /*foreach (var meal in dto)
             {
                 var present = _groupRepo.SetGroupAttendance(target, _schemaService.Translate(meal.Name), meal.Present, date);
                 result.Add(new AttendanceRequestDto
@@ -69,7 +66,7 @@ namespace Rollcall.Services
                     Name = meal.Name,
                     Present = present
                 });
-            }
+            }*/
             await _groupRepo.SaveChangesAsync();
             return result;
         }
