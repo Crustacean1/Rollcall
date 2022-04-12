@@ -70,8 +70,8 @@ class Program
         builder.Services.AddScoped<DtoShapingService>();
         builder.Services.AddScoped<ChildAttendanceService>();
         builder.Services.AddScoped<GroupAttendanceService>();
-        builder.Services.AddScoped<ChildService>();
-        builder.Services.AddScoped<GroupService>();
+        builder.Services.AddScoped<IChildService, ChildService>();
+        builder.Services.AddScoped<IGroupService, GroupService>();
     }
     static public void Main(String[] args)
     {

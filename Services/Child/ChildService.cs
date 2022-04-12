@@ -1,10 +1,11 @@
+using Rollcall.Helpers;
 using Rollcall.Specifications;
 using Rollcall.Models;
 using Rollcall.Repositories;
 
 namespace Rollcall.Services
 {
-    public class ChildService
+    public class ChildService : IChildService
     {
         DefaultAttendanceComparer _comparer;
         ILogger<ChildService> _logger;
@@ -27,7 +28,7 @@ namespace Rollcall.Services
 
         public IEnumerable<ChildDto>? GetChildrenFromGroup(int groupId)
         {
-            if (groupId != 0 && _groupRepo.GetGroup(groupId) is null)
+            if (groupId != 0 && _groupRepo.GetGroup(new BaseGroupSpecification(groupId)) is null)
             {
                 return null;
             }
@@ -137,7 +138,7 @@ namespace Rollcall.Services
         }
         private bool IsValidChild(Child child)
         {
-            if (_groupRepo.GetGroup(child.GroupId) is null)
+            if (_groupRepo.GetGroup(new BaseGroupSpecification(child.GroupId)) is null)
             {
                 _logger.LogError($"In ChildService: Cannot assign child to nonexistent group: {child.GroupId}");
                 return false;

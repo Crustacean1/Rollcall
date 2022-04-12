@@ -18,6 +18,10 @@ namespace Rollcall.Repositories
             .AsNoTracking()
             .Where(condition);
         }
+        protected IQueryable<T> IncludeOthers<T>(IQueryable<T> query, IEnumerable<Expression<Func<T, object>>> includes) where T : class
+        {
+            return includes.Aggregate(query, (query, include) => query.Include(include));
+        }
 
         public async Task SaveChangesAsync()
         {

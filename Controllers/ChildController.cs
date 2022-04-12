@@ -11,10 +11,10 @@ namespace Rollcall.Controllers
     [Route("[controller]")]
     public class ChildController : ControllerBase
     {
-        private readonly ChildService _childService;
+        private readonly IChildService _childService;
         private readonly ILogger<ChildController> _logger;
 
-        public ChildController(ILogger<ChildController> logger, ChildService childService)
+        public ChildController(ILogger<ChildController> logger, IChildService childService)
         {
             _logger = logger;
             _childService = childService;

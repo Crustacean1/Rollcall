@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+
+using Rollcall.Specifications;
 using Rollcall.Models;
 
 namespace Rollcall.Repositories
@@ -11,15 +13,12 @@ namespace Rollcall.Repositories
             var query = track ? _context.Groups : _context.Groups.AsNoTracking();
             return query;
         }
-        public Group? GetGroup(string name, bool track = false)
+        public Group? GetGroup(ISpecification<Group> spec)
         {
-            var query = track ? _context.Groups : _context.Groups.AsNoTracking();
-            return query.Where(group => group.Name == name).FirstOrDefault();
-        }
-        public Group? GetGroup(int Id, bool track = false)
-        {
-            var query = track ? _context.Groups : _context.Groups.AsNoTracking();
-            return query.Where(group => group.Id == Id).FirstOrDefault();
+            var query = spec.Tracking ? _context.Groups : _context.Groups.AsNoTracking();
+            return IncludeOthers(query, spec.Includes)
+            .Where(spec.Condition)
+            .FirstOrDefault();
         }
         public void AddGroup(Group group)
         {

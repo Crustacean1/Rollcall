@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Rollcall.Specifications;
 using Rollcall.Models;
 using Rollcall.Repositories;
 using Rollcall.Services;
@@ -32,7 +33,7 @@ namespace Rollcall.Controllers
             Group? group = null;
             if (groupId != 0)
             {
-                group = _groupRepo.GetGroup(groupId);
+                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
                 if (group == null)
                 {
                     return NotFound();
@@ -55,7 +56,7 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<IEnumerable<DailyChildAttendanceDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
-            var group = _groupRepo.GetGroup(groupId);
+            var group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
             if (group == null) { return NotFound(); }
             var result = _attendanceService.GetDailySummary(group, year, month, day);
             return result.ToList();
@@ -69,7 +70,7 @@ namespace Rollcall.Controllers
             Group? group = null;
             if (groupId != 0)
             {
-                group = _groupRepo.GetGroup(groupId);
+                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
                 if (group == null)
                 {
                     return NotFound();
@@ -87,7 +88,7 @@ namespace Rollcall.Controllers
             Group? group = null;
             if (groupId != 0)
             {
-                group = _groupRepo.GetGroup(groupId);
+                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
                 if (group == null)
                 {
                     return NotFound();
@@ -104,7 +105,7 @@ namespace Rollcall.Controllers
             Group? group = null;
             if (groupId != 0)
             {
-                group = _groupRepo.GetGroup(groupId);
+                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
                 if (group == null)
                 {
                     return NotFound();

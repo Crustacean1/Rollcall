@@ -1,9 +1,10 @@
+using Rollcall.Specifications;
 using Rollcall.Repositories;
 using Rollcall.Models;
 
 namespace Rollcall.Services
 {
-    public class GroupService
+    public class GroupService : IGroupService
     {
         ILogger<GroupService> _logger;
         GroupRepository _groupRepo;
@@ -22,13 +23,14 @@ namespace Rollcall.Services
         }
         public GroupDto? GetGroup(int groupId)
         {
-            var group = _groupRepo.GetGroup(groupId);
+            if (groupId == 0) { return new GroupDto { Name = "Wszystkie", Id = 0 }; }
+            var group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
             if (group == null) { return null; }
             return new GroupDto { Name = group.Name, Id = group.Id };
         }
         public async Task<GroupDto?> CreateGroup(GroupCreationDto dto)
         {
-            if (_groupRepo.GetGroup(dto.Name) != null)
+            if (_groupRepo.GetGroup(new BaseGroupSpecification(dto.Name)) != null)
             {
                 return null;
             }
@@ -39,8 +41,8 @@ namespace Rollcall.Services
         }
         public async Task<GroupDto?> RenameGroup(int groupId, GroupUpdateDto dto)
         {
-            var group = _groupRepo.GetGroup(groupId, true);
-            if (group == null || _groupRepo.GetGroup(dto.Name) != null)
+            var group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId, true));
+            if (group == null || _groupRepo.GetGroup(new BaseGroupSpecification(dto.Name)) != null)
             {
                 return null;
             }

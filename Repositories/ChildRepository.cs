@@ -9,7 +9,7 @@ namespace Rollcall.Repositories
         public Child? GetChild(ISpecification<Child> spec)
         {
             var query = spec.Tracking ? _context.Children : _context.Children.AsNoTracking();
-            var extendedQuery = spec.Includes.Aggregate(query, (q, s) => q.Include(s));
+            var extendedQuery = IncludeOthers(query, spec.Includes);
             var thinnedQuery = extendedQuery.Where(spec.Condition);
             return thinnedQuery.FirstOrDefault();
         }
@@ -17,7 +17,7 @@ namespace Rollcall.Repositories
         public IEnumerable<Child> GetChildrenByGroup(ISpecification<Child> spec)
         {
             var query = spec.Tracking ? _context.Children : _context.Children.AsNoTracking();
-            var extendedQuery = spec.Includes.Aggregate(query, (q, s) => q.Include(s));
+            var extendedQuery = IncludeOthers(query, spec.Includes);
             var thinnedQuery = extendedQuery.Where(spec.Condition);
             return thinnedQuery;
         }

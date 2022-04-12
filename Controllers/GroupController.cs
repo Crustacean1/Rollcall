@@ -9,9 +9,9 @@ namespace Rollcall.Controllers
     [Route("group")]
     public class GroupController : ControllerBase
     {
-        private readonly GroupService _groupService;
+        private readonly IGroupService _groupService;
         private readonly ILogger<GroupController> _logger;
-        public GroupController(GroupService groupService, ILogger<GroupController> logger)
+        public GroupController(IGroupService groupService, ILogger<GroupController> logger)
         {
             _groupService = groupService;
             _logger = logger;
