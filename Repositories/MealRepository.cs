@@ -1,23 +1,16 @@
 using Rollcall.Models;
-using Rollcall.Specifications;
-
 namespace Rollcall.Repositories
 {
-    public class MealRepository
+    public class MealRepository : RepositoryBase
     {
-        private readonly DbContext _context;
-        public MealRepository(RepositoryContext context)
+        public MealRepository(RepositoryContext context) : base(context) { }
+        public IEnumerable<ChildAttendance> GetChildAttendance(int childId, DateTime date)
         {
-            _context = context;
+            return GetSetWhere<ChildAttendance>(c => c.ChildId == childId && c.Date == date);
         }
-
-        public ChildMeal GetCount(ISpecification<Child> spec)
+        public void AddChildMeal(ChildAttendance childMeal)
         {
-            var query = _context.Set<Child>()
-            .AsNoTracking();
-            var expandedQuery = spec.Includes.Aggegate(query, (q, i) => q.Include(i));
-            var groupedQuery = spec.Groups.Aggregate(expandedQuery, (q, g) => q.GroupBy(g));
-            return expandedQuery.Where(spec.Condition);
+            _context.Set<ChildAttendance>().Add(childMeal);
         }
     }
 }

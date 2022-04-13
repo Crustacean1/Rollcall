@@ -7,6 +7,5 @@ namespace Rollcall.Specifications
         public bool Tracking { get; }
         Expression<Func<T, bool>> Condition { get; }
         IEnumerable<Expression<Func<T, object>>> Includes { get; }
-        IEnumerable<Expression<Func<T, object>>> Groups { get; }
     }
 }
