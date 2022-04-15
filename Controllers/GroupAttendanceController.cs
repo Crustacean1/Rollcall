@@ -14,107 +14,92 @@ namespace Rollcall.Controllers
     public class GroupAttendanceController : ControllerBase
     {
         private readonly ILogger<GroupAttendanceController> _logger;
-        private readonly GroupRepository _groupRepo;
-        private readonly GroupAttendanceService _attendanceService;
+        private readonly IGroupMealService _groupService;
         public GroupAttendanceController(ILogger<GroupAttendanceController> logger,
-        GroupAttendanceService attendanceService,
+        IGroupMealService groupService,
         GroupRepository groupRepo)
         {
             _logger = logger;
-            _attendanceService = attendanceService;
-            _groupRepo = groupRepo;
+            _groupService = groupService;
         }
 
         [HttpGet, Authorize]
-        [Route("count/{groupId}/{year}/{month}")]
+        [Route("monthly/{groupId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<AttendanceCountDto> GetMonthlyCount(int groupId, int year, int month)
         {
-            Group? group = null;
-            if (groupId != 0)
+            try
             {
-                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
-                if (group == null)
-                {
-                    return NotFound();
-                }
+                var result = _groupService.GetMonthlySummary(groupId, year, month);
+                return Ok(result);
             }
-            var result = _attendanceService.GetMonthlyCount(group, year, month);
-            return Ok(result);
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpGet, Authorize]
-        [Route("summary/{year}/{month}")]
-        [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<IEnumerable<ChildAttendanceSummaryDto>> GetMonthlySummary(int year, int month)
-        {
-            var result = _attendanceService.GetMonthlySummary(year, month);
-            return result.ToList();
-        }
-        [HttpGet, Authorize]
-        [Route("summary/{groupId}/{year}/{month}/{day}")]
+        [Route("childlist/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<IEnumerable<DailyChildAttendanceDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
-            var group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
-            if (group == null) { return NotFound(); }
-            var result = _attendanceService.GetDailySummary(group, year, month, day);
-            return result.ToList();
+            try
+            {
+                var result = _groupService.GetDailyInfo(groupId, year, month, day);
+                return Ok(result);
+            }
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<DayAttendanceDto>> GetMonthlyAttendance(int groupId, int year, int month)
+        public ActionResult<IEnumerable<DayAttendanceDto>> GetMonthlyAttendance(int groupId, int year, int month)
         {
-            Group? group = null;
-            if (groupId != 0)
+            try
             {
-                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
-                if (group == null)
-                {
-                    return NotFound();
-                }
+                var result = _groupService.GetDailySummaries(groupId, year, month);
+                return Ok(result);
             }
-            _logger.LogInformation($"Is group null: {group == null}");
-            var result = _attendanceService.GetMonthlyAttendance(group, year, month);
-            return Ok(result);
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}/{day}")]
         public ActionResult<DayAttendanceDto> GetDailyCount(int groupId, int year, int month, int day)
         {
-            Group? group = null;
-            if (groupId != 0)
+            try
             {
-                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
-                if (group == null)
-                {
-                    return NotFound();
-                }
+                var result = _groupService.GetDailySummary(groupId, year, month, day);
+                return Ok(result);
             }
-            return Ok(_attendanceService.GetDailyCount(group, year, month, day));
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpPost, Authorize]
         [Route("{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(FutureDateValidationFilter))]
-        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
+        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
         {
-            Group? group = null;
-            if (groupId != 0)
+            try
             {
-                group = _groupRepo.GetGroup(new BaseGroupSpecification(groupId));
-                if (group == null)
-                {
-                    return NotFound();
-                }
+                var result = await _groupService.UpdateAttendance(update, groupId, year, month, day);
+                return Ok(result);
             }
-
-            var date = new MealDate(year, month, day);
-            var result = await _attendanceService.SetAttendance(group, dto, date);
-            return Ok(result);
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
     }
 }

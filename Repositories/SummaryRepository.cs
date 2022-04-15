@@ -18,13 +18,6 @@ namespace Rollcall.Repositories
         public DateTime Date { get; set; }
         public int Total { get; set; }
     }
-    public class MealGrouping
-    {
-        public DateTime Date { get; set; }
-        public string MealName { get; set; }
-        public int ChildId { get; set; }
-    }
-
     public class SummaryRepository
     {
         private readonly RepositoryContext _context;

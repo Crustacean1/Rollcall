@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 using Rollcall.Models;
 namespace Rollcall.Repositories
 {
@@ -8,9 +10,19 @@ namespace Rollcall.Repositories
         {
             return GetSetWhere<ChildAttendance>(c => c.ChildId == childId && c.Date == date);
         }
-        public void AddChildMeal(ChildAttendance childMeal)
+        public void UpdateChildAttendance(IEnumerable<ChildAttendance> updates)
         {
-            _context.Set<ChildAttendance>().Add(childMeal);
+            foreach (var meal in updates)
+            {
+                _context.Entry(meal).State = EntityState.Modified;
+            }
+        }
+        public void AddChildAttendance(IEnumerable<ChildAttendance> newAttendances)
+        {
+            foreach (var meal in newAttendances)
+            {
+                _context.Entry(meal).State = EntityState.Added;
+            }
         }
     }
 }

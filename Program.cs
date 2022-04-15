@@ -16,18 +16,14 @@ class Program
         {
             options.UseMySql(sqlConnectionString, ServerVersion.AutoDetect(sqlConnectionString));
         });
-        builder.Services.AddScoped<ChildRepository>();
         builder.Services.AddScoped<UserRepository>();
+
+        builder.Services.AddScoped<ChildRepository>();
         builder.Services.AddScoped<GroupRepository>();
+
+        builder.Services.AddScoped<SummaryRepository>();
         builder.Services.AddScoped<MealSchemaRepository>();
-
-        builder.Services.AddScoped<ChildAttendanceRepository>();
-        builder.Services.AddScoped<GroupAttendanceRepository>();
-
-        builder.Services.AddScoped<AttendanceSummaryRepository>();
-
-        builder.Services.AddScoped<ChildMaskRepository>();
-        builder.Services.AddScoped<GroupMaskRepository>();
+        builder.Services.AddScoped<MealRepository>();
     }
     static private void ConfigureAuthentication()
     {
@@ -67,11 +63,10 @@ class Program
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<FutureDateValidationFilter>();
 
-        builder.Services.AddScoped<DtoShapingService>();
-        builder.Services.AddScoped<ChildAttendanceService>();
-        builder.Services.AddScoped<GroupAttendanceService>();
         builder.Services.AddScoped<IChildService, ChildService>();
         builder.Services.AddScoped<IGroupService, GroupService>();
+        builder.Services.AddScoped<IMealService, ChildMealService>();
+        //builder.Services.AddScoped<IGroupService, >();
     }
     static public void Main(String[] args)
     {

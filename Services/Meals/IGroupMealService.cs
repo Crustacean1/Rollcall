@@ -10,7 +10,7 @@ namespace Rollcall.Services
     {
 
     }
-    public interface IGroupMealService
+    public interface IGroupMealService : IMealService
     {
         public IEnumerable<DailyMealInfoDto> GetDailyInfo(int groupId, int year, int month, int day);
         public MonthlyMealInfoDto GetMonthlyInfo(int groupId, int year, int month, int day);

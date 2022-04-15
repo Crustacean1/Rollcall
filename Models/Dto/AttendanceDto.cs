@@ -18,6 +18,9 @@ namespace Rollcall.Models
             });
         }
     }
+    public class AttendanceUpdateResultDto{
+        public IDictionary<string,bool> Meals;
+    }
     public class AttendanceCountDto
     {
         public Dictionary<string, int> Meals { get; set; }

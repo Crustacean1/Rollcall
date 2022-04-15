@@ -8,83 +8,76 @@ using Rollcall.Services;
 
 namespace Rollcall.Controllers
 {
+    class ChildMealUpdate
+    {
+        public IDictionary<string, bool> Meals { get; set; }
+    }
+
     [ApiController]
     [Route("attendance/child")]
     public class ChildAttendanceController : ControllerBase
     {
         private readonly ILogger<ChildAttendanceController> _logger;
-        private readonly ChildRepository _childRepo;
-        private readonly ChildAttendanceService _attendanceService;
+        private readonly IMealService _mealService;
         public ChildAttendanceController(ILogger<ChildAttendanceController> logger,
-        ChildAttendanceService attendanceService,
-        ChildRepository childRepo)
+        IMealService mealService)
         {
             _logger = logger;
-            _attendanceService = attendanceService;
-            _childRepo = childRepo;
+            _mealService = mealService;
         }
 
         [HttpGet, Authorize]
-        [Route("count/{childId}/{year}/{month}")]
+        [Route("monthly/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<AttendanceCountDto> GetMonthlyCount(int childId, int year, int month)
         {
-            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
-            if (child == null)
-            {
-                return NotFound();
-            }
-            var result = _attendanceService.GetMonthlyCount(child, year, month);
-            return Ok(result);
+            return HandleRequest(() => _mealService.GetMonthlySummary(childId, year, month));
         }
 
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
-        public ActionResult<List<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
+        public ActionResult<IEnumerable<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
-            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
-            if (child == null)
-            {
-                return NotFound();
-            }
-            var result = _attendanceService.GetMonthlyAttendance(child, year, month);
-            return Ok(result);
+            _logger.LogInformation($"getting monthly attendance of {childId}");
+            return HandleRequest(() => _mealService.GetDailySummaries(childId, year, month));
         }
+
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}/{day}")]
+        [ServiceFilter(typeof(DateValidationFilter))]
         public ActionResult<DayAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
-            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
-            if (child == null)
-            {
-                return NotFound();
-            }
-            return Ok(_attendanceService.GetDailyAttendance(child, year, month));
+            return HandleRequest(() => _mealService.GetDailySummary(childId, year, month, day));
         }
 
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(FutureDateValidationFilter))]
-        public async Task<ActionResult<List<DayAttendanceDto>>> SetAttendance(int childId, int year, int month, int day, [FromBody] List<AttendanceRequestDto> dto)
+        public async Task<ActionResult<IDictionary<string, bool>>> SetAttendance(int childId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
         {
-            var child = _childRepo.GetChild(new BaseChildSpecification(childId));
-            if (child == null)
+            try
+            {
+                _logger.LogInformation("ChildController: Trying to update child");
+                var newAttendance = await _mealService.UpdateAttendance(update, childId, year, month, day);
+                return Ok(newAttendance.Meals);
+            }
+            catch (InvalidDataException e)
             {
                 return NotFound();
             }
-            var result = await _attendanceService.SetAttendance(child, dto, year, month, day);
-            return Ok(result);
         }
-
-        [HttpPost, Authorize]
-        [Route("extend/{year}/{month}")]
-        [ServiceFilter(typeof(FutureDateValidationFilter))]
-        public async Task<ActionResult<ExtendResultDto>> ExtendChildrenAttendance(int year, int month)
+        private ActionResult<T> HandleRequest<T>(Func<T> del)
         {
-            var children = _childRepo.GetChildrenByGroup(new TotalChildGroupSpecification());
-            var updated = await _attendanceService.ExtendAttendance(children, year, month);
-            return new ExtendResultDto { Updated = updated };
+            try
+            {
+                var result = del();
+                return Ok(result);
+            }
+            catch (InvalidDataException e)
+            {
+                return NotFound(e.Message);
+            }
         }
     }
 }
