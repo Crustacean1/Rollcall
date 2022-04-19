@@ -30,7 +30,7 @@ class Program
     static private void ConfigureAuthentication()
     {
         if (builder == null) { return; }
-        // Note: there is a bug with newest version of Microsoft.IdentityModel assembly, should have used the other one from asp net but idk
+        // Note: there is a bug with newest version of Microsoft.IdentityModel assembly
         builder.Services.AddAuthentication(opt =>
         {
             opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -72,7 +72,7 @@ class Program
         builder.Services.AddScoped<IGroupService, GroupService>();
 
         builder.Services.AddScoped<IMealService<Child>, ChildMealService>();
-        //builder.Services.AddScoped<IGroupMealService, GroupMealService>();
+        builder.Services.AddScoped<IGroupMealService, GroupMealService>();
 
         builder.Services.AddScoped<MealShaper>();
 

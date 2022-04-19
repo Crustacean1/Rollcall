@@ -43,6 +43,22 @@ namespace Rollcall.Specifications
             Grouping = (ChildMeal c) => c.MealName;
             Selection = (IGrouping<string, ChildMeal> group) => new TotalSummaryResult { MealName = group.Key, Total = group.Count() };
         }
+        public TotalSummarySpecification(int year, int month, bool masked)
+        {
+            Masked = masked;
+            Condition = (ChildMeal c) => c.Date.Year == year && c.Date.Month == month;
+            Includes = new List<Expression<Func<ChildMeal, object>>>();
+            Grouping = (ChildMeal c) => c.MealName;
+            Selection = (IGrouping<string, ChildMeal> group) => new TotalSummaryResult { MealName = group.Key, Total = group.Count() };
+        }
+        public TotalSummarySpecification(int year, int month, int day, bool masked)
+        {
+            Masked = masked;
+            Condition = (ChildMeal c) => c.Date == new DateTime(year, month, day);
+            Includes = new List<Expression<Func<ChildMeal, object>>>();
+            Grouping = (ChildMeal c) => c.MealName;
+            Selection = (IGrouping<string, ChildMeal> group) => new TotalSummaryResult { MealName = group.Key, Total = group.Count() };
+        }
     }
     public class TotalSummaryResult
     {

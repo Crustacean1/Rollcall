@@ -29,15 +29,8 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(GroupExtractorFilter))]
         public ActionResult<AttendanceCountDto> GetMonthlyCount(int groupId, int year, int month)
         {
-            try
-            {
-                var result = _groupService.GetMonthlySummary((Group)HttpContext.Items["group"], year, month);
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            var result = _groupService.GetMonthlySummary((Group)HttpContext.Items["group"], year, month);
+            return Ok(result);
         }
 
         [HttpGet, Authorize]
@@ -46,15 +39,8 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(GroupExtractorFilter))]
         public ActionResult<IEnumerable<DailyChildAttendanceDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
-            try
-            {
-                var result = _groupService.GetDailyInfo((Group)HttpContext.Items["group"], year, month, day);
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            var result = _groupService.GetDailyInfo((Group)HttpContext.Items["group"], year, month, day);
+            return Ok(result);
         }
 
         [HttpGet, Authorize]
@@ -63,15 +49,8 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(GroupExtractorFilter))]
         public ActionResult<IEnumerable<DayAttendanceDto>> GetMonthlyAttendance(int groupId, int year, int month)
         {
-            try
-            {
-                var result = _groupService.GetDailySummaries((Group)HttpContext.Items["group"], year, month);
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            var result = _groupService.GetDailySummaries((Group)HttpContext.Items["group"], year, month);
+            return Ok(result);
         }
 
         [HttpGet, Authorize]
@@ -79,15 +58,8 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(GroupExtractorFilter))]
         public ActionResult<DayAttendanceDto> GetDailyCount(int groupId, int year, int month, int day)
         {
-            try
-            {
-                var result = _groupService.GetDailySummary((Group)HttpContext.Items["group"], year, month, day);
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            var result = _groupService.GetDailySummary((Group)HttpContext.Items["group"], year, month, day);
+            return Ok(result);
         }
 
         [HttpPost, Authorize]
@@ -96,15 +68,8 @@ namespace Rollcall.Controllers
         [ServiceFilter(typeof(GroupExtractorFilter))]
         public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
         {
-            try
-            {
-                var result = await _groupService.UpdateAttendance(update, (Group)HttpContext.Items["group"], year, month, day);
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            var result = await _groupService.UpdateAttendance(update, (Group)HttpContext.Items["group"], year, month, day);
+            return Ok(result);
         }
     }
 }

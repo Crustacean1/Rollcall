@@ -33,5 +33,17 @@ namespace Rollcall.Specifications
             Includes = new List<Expression<Func<GroupMask, object>>>();
             Tracking = false;
         }
+        public GroupMealSpecification(int year, int month)
+        {
+            Condition = (GroupMask a) => a.Date.Year == year && a.Date.Month == month;
+            Includes = new List<Expression<Func<GroupMask, object>>>();
+            Tracking = false;
+        }
+        public GroupMealSpecification(int year, int month, int day)
+        {
+            Condition = (GroupMask a) => a.Date == new DateTime(year, month, day);
+            Includes = new List<Expression<Func<GroupMask, object>>>();
+            Tracking = false;
+        }
     }
 }

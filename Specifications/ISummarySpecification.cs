@@ -6,8 +6,6 @@ using Rollcall.Repositories;
 namespace Rollcall.Specifications
 {
     public interface ISummarySpecification<GroupingType, ResultType>
-    where GroupingType : class
-    where ResultType : class
     {
         public bool Masked { get; }
         public Expression<Func<ChildMeal, bool>> Condition { get; }

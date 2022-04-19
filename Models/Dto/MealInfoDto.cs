@@ -1,6 +1,6 @@
 namespace Rollcall.Models
 {
-    public class ChildAttendanceSummaryDto
+    public class MealInfoDto
     {
         public string Name { get; set; }
         public string Surname { get; set; }

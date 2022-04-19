@@ -55,5 +55,18 @@ namespace Rollcall.Services
         {
             return new AttendanceCountDto { Meals = meals.ToDictionary(a => a.MealName, a => a.Total) };
         }
+        public IEnumerable<MealInfoDto> ShapeInfo(IEnumerable<MealInfo> info)
+        {
+            return info
+            .GroupBy(i => new { i.Name, i.Surname, i.ChildId, i.GroupName })
+            .Select(child => new MealInfoDto
+            {
+                Name = child.Key.Name,
+                Surname = child.Key.Surname,
+                GroupName = child.Key.GroupName,
+                ChildId = child.Key.ChildId,
+                Summary = child.ToDictionary(m => m.MealName, m => m.Total)
+            });
+        }
     }
 }

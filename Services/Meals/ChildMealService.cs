@@ -30,8 +30,10 @@ namespace Rollcall.Services
         }
         public DayAttendanceDto GetDailySummary(Child child, int year, int month, int day)
         {
-            var meals = _summaryRepo.GetMeals(new TotalSummarySpecification(child, year, month, day, true));
+            var meals = _mealRepo.GetMeals(new ChildMealSpecification(child, year, month, day))
+            .Select(m => new TotalSummaryResult { MealName = m.MealName, Total = m.Attendance ? 1 : 0 });
             var masks = _maskRepo.GetMeals(new GroupMealSpecification(child, year, month, day));
+
             return _shaper.ShapeDailySummary(meals, masks);
         }
         public IEnumerable<DayAttendanceDto> GetDailySummaries(Child child, int year, int month)

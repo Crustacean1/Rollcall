@@ -6,31 +6,6 @@ using Rollcall.Specifications;
 
 namespace Rollcall.Repositories
 {
-    public class MealSummaryEntry
-    {
-        public int ChildId { get; set; }
-        public string MealName { get; set; }
-        public DateTime Date { get; set; }
-    }
-    public class MealSummary
-    {
-        public string MealName { get; set; }
-        public int Total { get; set; }
-    }
-    public class DailyMealSummary
-    {
-        public string MealName { get; set; }
-        public int Total { get; set; }
-        public DateTime Date { get; set; }
-    }
-    public class ChildMealSummary
-    {
-        public string Name { get; set; }
-        public string Surname { get; set; }
-        public string MealName { get; set; }
-        public string GroupName { get; set; }
-        public int Total { get; set; }
-    }
     public class SummaryRepository
     {
         private readonly RepositoryContext _context;
@@ -52,6 +27,14 @@ namespace Rollcall.Repositories
             var extendedQuery = spec.Includes.Aggregate(leftJoin, (query, include) => query.Include(include));
 
             return leftJoin.GroupBy(spec.Grouping).Select(spec.Selection);
+        }
+        public IEnumerable<MealInfo> GetMealInfo(GroupInfoSpecification spec)
+        {
+            var query = _context.Set<ChildMeal>()
+            .AsNoTracking()
+            .Where(spec.Condition);
+            var extendedQuery = spec.Includes.Aggregate(query, (q, i) => q.Include(i));
+            return extendedQuery.GroupBy(spec.Grouping).Select(spec.Selection);
         }
         private IQueryable<ChildMeal> GetMaskedMeals(IQueryable<ChildMeal> query)
         {
