@@ -22,7 +22,6 @@ namespace Rollcall.Repositories
         {
             return includes.Aggregate(query, (query, include) => query.Include(include));
         }
-
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

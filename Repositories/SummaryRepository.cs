@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 using Rollcall.Models;
@@ -13,9 +14,21 @@ namespace Rollcall.Repositories
     }
     public class MealSummary
     {
-        public int ChildId { get; set; }
         public string MealName { get; set; }
+        public int Total { get; set; }
+    }
+    public class DailyMealSummary
+    {
+        public string MealName { get; set; }
+        public int Total { get; set; }
         public DateTime Date { get; set; }
+    }
+    public class ChildMealSummary
+    {
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public string MealName { get; set; }
+        public string GroupName { get; set; }
         public int Total { get; set; }
     }
     public class SummaryRepository
@@ -25,33 +38,35 @@ namespace Rollcall.Repositories
         {
             _context = context;
         }
-
-        public IEnumerable<MealSummary> GetGroupSummary<T>(ISummarySpecification<T> spec)
+        public IEnumerable<ResultType> GetMeals<GroupingType, ResultType>(ISummarySpecification<GroupingType, ResultType> spec)
+         where GroupingType : class
+         where ResultType : class
         {
-            var query = _context.Set<ChildAttendance>()
+            var query = _context.Set<ChildMeal>()
             .AsNoTracking()
-            .Where(spec.MealCondition);
+            .Where(m => m.Attendance);
 
-            IQueryable<MealSummaryEntry> leftJoin = spec.Masked ? GetMaskedMeals(query) : GetUnmaskedMeals(query);
+            var leftJoin = (spec.Masked ? GetMaskedMeals(query) : query)
+            .Where(spec.Condition);
+
+            var extendedQuery = spec.Includes.Aggregate(leftJoin, (query, include) => query.Include(include));
 
             return leftJoin.GroupBy(spec.Grouping).Select(spec.Selection);
         }
-        private IQueryable<MealSummaryEntry> GetMaskedMeals(IQueryable<ChildAttendance> query)
+        private IQueryable<ChildMeal> GetMaskedMeals(IQueryable<ChildMeal> query)
         {
-            return query.GroupJoin(_context.Set<GroupAttendance>().AsNoTracking(),
-                 a => new { Date = a.Date, Name = a.MealName, TargetGroup = a.TargetChild.MyGroup },
-                 a => new { Date = a.Date, Name = a.MealName, TargetGroup = a.TargetGroup },
-                 (c, g) => new { ChildMeal = c, GroupMask = g })
-                .SelectMany(q => q.GroupMask,
-                (c, g) => new { Date = c.ChildMeal.Date, Name = c.ChildMeal.MealName, ChildId = c.ChildMeal.ChildId, Present = c.ChildMeal.Attendance, Masked = g.Attendance })
-                .Where(a => a.Present && a.Masked != true)
-                .Select(a => new MealSummaryEntry { MealName = a.Name, ChildId = a.ChildId, Date = a.Date });
-        }
-        private IQueryable<MealSummaryEntry> GetUnmaskedMeals(IQueryable<ChildAttendance> query)
-        {
-            return query
-                .Where(a => a.Attendance)
-                .Select(a => new MealSummaryEntry { MealName = a.MealName, ChildId = a.ChildId, Date = a.Date });
+            var maskQuery = _context
+            .Set<GroupMask>()
+            .Where(m => m.Attendance);
+
+            return query.GroupJoin(maskQuery,
+                 a => new { Date = a.Date, Name = a.MealName, GroupId = a.TargetChild.GroupId },
+                 a => new { Date = a.Date, Name = a.MealName, GroupId = a.GroupId },
+                 (c, g) => new { ChildMeal = c, Mask = g })
+                .SelectMany(q => q.Mask.DefaultIfEmpty(),
+                (c, g) => new { Meal = c.ChildMeal, Masked = g })
+                .Where(a => a.Masked.Attendance != true)
+                .Select(a => a.Meal);
         }
     }
 }

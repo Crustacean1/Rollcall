@@ -23,7 +23,9 @@ class Program
 
         builder.Services.AddScoped<SummaryRepository>();
         builder.Services.AddScoped<MealSchemaRepository>();
-        builder.Services.AddScoped<MealRepository>();
+
+        builder.Services.AddScoped<MealRepository<ChildMeal>>();
+        builder.Services.AddScoped<MealRepository<GroupMask>>();
     }
     static private void ConfigureAuthentication()
     {
@@ -63,16 +65,24 @@ class Program
         builder.Services.AddScoped<DateValidationFilter>();
         builder.Services.AddScoped<FutureDateValidationFilter>();
 
+        builder.Services.AddScoped<ChildExtractorFilter>();
+        builder.Services.AddScoped<GroupExtractorFilter>();
+
         builder.Services.AddScoped<IChildService, ChildService>();
         builder.Services.AddScoped<IGroupService, GroupService>();
-        builder.Services.AddScoped<IMealService, ChildMealService>();
-        //builder.Services.AddScoped<IGroupService, >();
+
+        builder.Services.AddScoped<IMealService<Child>, ChildMealService>();
+        //builder.Services.AddScoped<IGroupMealService, GroupMealService>();
+
+        builder.Services.AddScoped<MealShaper>();
+
+        builder.Services.AddScoped<IEqualityComparer<ChildMeal>, MealComparer<ChildMeal>>();
+        builder.Services.AddScoped<IEqualityComparer<GroupMask>, MealComparer<GroupMask>>();
     }
     static public void Main(String[] args)
     {
         builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
         ConfigureRepositories();
         ConfigureAuthentication();
         ConfigureServices();
@@ -81,11 +91,6 @@ class Program
         builder.Services.AddControllers();
 
         var app = builder.Build();
-
-
-        if (app.Environment.IsDevelopment())
-        {
-        }
 
         app.UseRouting();
 

@@ -18,9 +18,9 @@ namespace Rollcall.Controllers
     public class ChildAttendanceController : ControllerBase
     {
         private readonly ILogger<ChildAttendanceController> _logger;
-        private readonly IMealService _mealService;
+        private readonly IMealService<Child> _mealService;
         public ChildAttendanceController(ILogger<ChildAttendanceController> logger,
-        IMealService mealService)
+        IMealService<Child> mealService)
         {
             _logger = logger;
             _mealService = mealService;
@@ -29,55 +29,40 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("monthly/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(ChildExtractorFilter))]
         public ActionResult<AttendanceCountDto> GetMonthlyCount(int childId, int year, int month)
         {
-            return HandleRequest(() => _mealService.GetMonthlySummary(childId, year, month));
+            return _mealService.GetMonthlySummary((Child)HttpContext.Items["child"], year, month);
         }
 
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(ChildExtractorFilter))]
         public ActionResult<IEnumerable<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
             _logger.LogInformation($"getting monthly attendance of {childId}");
-            return HandleRequest(() => _mealService.GetDailySummaries(childId, year, month));
+            return _mealService.GetDailySummaries((Child)HttpContext.Items["child"], year, month).ToList();
         }
 
         [HttpGet, Authorize]
         [Route("daily/{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(ChildExtractorFilter))]
         public ActionResult<DayAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
         {
-            return HandleRequest(() => _mealService.GetDailySummary(childId, year, month, day));
+            return _mealService.GetDailySummary((Child)HttpContext.Items["child"], year, month, day);
         }
 
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(FutureDateValidationFilter))]
-        public async Task<ActionResult<IDictionary<string, bool>>> SetAttendance(int childId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
+        [ServiceFilter(typeof(ChildExtractorFilter))]
+        public async Task<ActionResult<IDictionary<string, bool>>> SetAttendance([FromBody] IDictionary<string, bool> update, int childId, int year, int month, int day)
         {
-            try
-            {
-                _logger.LogInformation("ChildController: Trying to update child");
-                var newAttendance = await _mealService.UpdateAttendance(update, childId, year, month, day);
-                return Ok(newAttendance.Meals);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound();
-            }
-        }
-        private ActionResult<T> HandleRequest<T>(Func<T> del)
-        {
-            try
-            {
-                var result = del();
-                return Ok(result);
-            }
-            catch (InvalidDataException e)
-            {
-                return NotFound(e.Message);
-            }
+            _logger.LogInformation("ChildController: Trying to update child");
+            var newAttendance = await _mealService.UpdateAttendance(update, (Child)HttpContext.Items["child"], year, month, day);
+            return Ok(newAttendance.Meals);
         }
     }
 }

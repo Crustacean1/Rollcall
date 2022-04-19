@@ -1,27 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 
-using Rollcall.Models;
+using Rollcall.Specifications;
+
 namespace Rollcall.Repositories
 {
-    public class MealRepository : RepositoryBase
+    public class MealRepository<MealType> : RepositoryBase where MealType : class
     {
         public MealRepository(RepositoryContext context) : base(context) { }
-        public IEnumerable<ChildAttendance> GetChildAttendance(int childId, DateTime date)
+        public IEnumerable<MealType> GetMeals(ISpecification<MealType> spec)
         {
-            return GetSetWhere<ChildAttendance>(c => c.ChildId == childId && c.Date == date);
+            var query = spec.Tracking ? _context.Set<MealType>() : _context.Set<MealType>().AsNoTracking();
+            var extendedQuery = IncludeOthers(query, spec.Includes);
+            return extendedQuery.Where(spec.Condition);
         }
-        public void UpdateChildAttendance(IEnumerable<ChildAttendance> updates)
+        public void UpdateMeals(IEnumerable<MealType> masks)
         {
-            foreach (var meal in updates)
+            foreach (var mask in masks)
             {
-                _context.Entry(meal).State = EntityState.Modified;
+                _context.Entry(mask).State = EntityState.Modified;
             }
         }
-        public void AddChildAttendance(IEnumerable<ChildAttendance> newAttendances)
+        public void CreateMeals(IEnumerable<MealType> masks)
         {
-            foreach (var meal in newAttendances)
+            foreach (var mask in masks)
             {
-                _context.Entry(meal).State = EntityState.Added;
+                _context.Entry(mask).State = EntityState.Added;
             }
         }
     }

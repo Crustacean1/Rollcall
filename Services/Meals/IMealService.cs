@@ -3,11 +3,11 @@ using Rollcall.Models;
 namespace Rollcall.Services
 {
     //Common base
-    public interface IMealService
+    public interface IMealService<TargetType>
     {
-        public DayAttendanceDto GetDailySummary(int id, int year, int month, int day);
-        public IEnumerable<DayAttendanceDto> GetDailySummaries(int id, int year, int month);
-        public AttendanceCountDto GetMonthlySummary(int id, int year, int month);
-        public Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, int id, int year, int month, int day);
+        public DayAttendanceDto GetDailySummary(TargetType target, int year, int month, int day);
+        public IEnumerable<DayAttendanceDto> GetDailySummaries(TargetType target, int year, int month);
+        public AttendanceCountDto GetMonthlySummary(TargetType target, int year, int month);
+        public Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, TargetType target, int year, int month, int day);
     }
 }

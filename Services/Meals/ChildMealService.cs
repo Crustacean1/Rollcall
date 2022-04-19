@@ -1,66 +1,68 @@
 using Rollcall.Models;
+using Rollcall.Specifications;
 using Rollcall.Repositories;
 
 namespace Rollcall.Services
 {
-    public class ChildMealService : IMealService
+    public class ChildMealService : IMealService<Child>
     {
-        private ChildAttendanceComparer _comparer;
-        private readonly MealRepository _mealRepo;
+        private readonly IEqualityComparer<ChildMeal> _comparer;
         private readonly SummaryRepository _summaryRepo;
+        private readonly MealRepository<ChildMeal> _mealRepo;
+        private readonly MealRepository<GroupMask> _maskRepo;
+        private readonly MealShaper _shaper;
         private readonly ILogger<ChildMealService> _logger;
-        public ChildMealService(MealRepository mealRepository, SummaryRepository summaryRepository, ILogger<ChildMealService> logger)
+        public ChildMealService(MealRepository<ChildMeal> mealRepo,
+                                MealRepository<GroupMask> maskRepo,
+                                SummaryRepository summaryRepo,
+                                MealShaper mealShaper,
+                                IEqualityComparer<ChildMeal> comparer,
+                                ILogger<ChildMealService> logger)
         {
-            _comparer = new ChildAttendanceComparer();
-            _mealRepo = mealRepository;
-            _summaryRepo = summaryRepository;
+            _comparer = comparer;
+
+            _mealRepo = mealRepo;
+            _summaryRepo = summaryRepo;
+            _maskRepo = maskRepo;
+            _shaper = mealShaper;
+
             _logger = logger;
         }
-        public DayAttendanceDto GetDailySummary(int id, int year, int month, int day)
+        public DayAttendanceDto GetDailySummary(Child child, int year, int month, int day)
         {
-            return new DayAttendanceDto { };
+            var meals = _summaryRepo.GetMeals(new TotalSummarySpecification(child, year, month, day, true));
+            var masks = _maskRepo.GetMeals(new GroupMealSpecification(child, year, month, day));
+            return _shaper.ShapeDailySummary(meals, masks);
         }
-        public IEnumerable<DayAttendanceDto> GetDailySummaries(int id, int year, int month)
+        public IEnumerable<DayAttendanceDto> GetDailySummaries(Child child, int year, int month)
         {
-            return new List<DayAttendanceDto> { };
+            var meals = _summaryRepo.GetMeals(new MonthlyAttendanceSpecification(child, year, month));
+            var masks = _maskRepo.GetMeals(new GroupMealSpecification(child, year, month));
+
+            return _shaper.MergeMealsWithMasks(meals, masks, year, month);
         }
-        public AttendanceCountDto GetMonthlySummary(int id, int year, int month)
+        public AttendanceCountDto GetMonthlySummary(Child child, int year, int month)
         {
-            var result = _summaryRepo.GetGroupSummary(new ChildSummarySpecification(id));
-            return new AttendanceCountDto { };
+            var meals = _summaryRepo.GetMeals(new TotalSummarySpecification(child, year, month, true));
+            return _shaper.ShapeMonthlySummary(meals);
         }
-        public async Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, int id, int year, int month, int day)
+        public async Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, Child child, int year, int month, int day)
         {
-            //TODO: Optimize updating so it doesnt update values that stay the same
-            var currentDate = new DateTime(year, month, day);
-            var currentMeals = _mealRepo.GetChildAttendance(id, new DateTime(year, month, day)).ToList();
-            var mealUpdate = updateDto.Select(d => new ChildAttendance { MealName = d.Key, Attendance = d.Value, ChildId = id, Date = currentDate });
+            //TODO: Optimize updating so it won't update values that stay the same
+            var dateOfUpdate = new DateTime(year, month, day);
+
+            var currentMeals = _mealRepo.GetMeals(new ChildMealSpecification(child, year, month, day)).ToList();
+            var mealUpdate = updateDto.Select(d => new ChildMeal { MealName = d.Key, Attendance = d.Value, ChildId = child.Id, Date = dateOfUpdate });
 
             var updatedMeals = mealUpdate.Intersect(currentMeals, _comparer).ToList();
             var newMeals = mealUpdate.Except(currentMeals, _comparer).ToList();
 
-            _mealRepo.UpdateChildAttendance(updatedMeals);
-            _mealRepo.AddChildAttendance(newMeals);
+            _mealRepo.UpdateMeals(updatedMeals);
+            _mealRepo.CreateMeals(newMeals);
 
             await _mealRepo.SaveChangesAsync();
 
-            return new AttendanceUpdateResultDto
-            {
-                Meals = updatedMeals
-            .Union(newMeals)
-            .ToDictionary(m => m.MealName, m => m.Attendance)
-            };
-        }
-    }
-    class ChildAttendanceComparer : IEqualityComparer<ChildAttendance>
-    {
-        public bool Equals(ChildAttendance? a, ChildAttendance? b)
-        {
-            return a is not null && b is not null && a.MealName == b.MealName;
-        }
-        public int GetHashCode(ChildAttendance a)
-        {
-            return a.MealName.GetHashCode() ^ a.Date.GetHashCode() ^ a.ChildId.GetHashCode();
+            return _shaper.ShapeUpdateResult(updatedMeals, newMeals);
         }
     }
 }

@@ -24,9 +24,5 @@ namespace Rollcall.Repositories
         {
             _context.Add(group);
         }
-        public void RemoveGroup(Group group)
-        {
-            _context.Remove(group);
-        }
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Rollcall.Services
 {
-    public class DateValidationFilterBase 
+    public class DateValidationFilterBase
     {
         protected DateTime? parseContext(ActionExecutingContext context)
         {
@@ -47,6 +47,6 @@ namespace Rollcall.Services
                 return;
             }
         }
-        public void OnActionExecuted(ActionExecutedContext context){}
+        public void OnActionExecuted(ActionExecutedContext context) { }
     }
 }

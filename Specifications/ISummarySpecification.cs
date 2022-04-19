@@ -5,12 +5,14 @@ using Rollcall.Repositories;
 
 namespace Rollcall.Specifications
 {
-    public interface ISummarySpecification<T>
+    public interface ISummarySpecification<GroupingType, ResultType>
+    where GroupingType : class
+    where ResultType : class
     {
-        public Expression<Func<ChildAttendance, bool>> MealCondition { get; }
-        //public Expression<Func<GroupAttendance, bool>> MaskingCondition { get; }
-        public Expression<Func<MealSummaryEntry, T>> Grouping { get; }
-        public Expression<Func<IGrouping<T, MealSummaryEntry>, MealSummary>> Selection { get; }
         public bool Masked { get; }
+        public Expression<Func<ChildMeal, bool>> Condition { get; }
+        public IEnumerable<Expression<Func<ChildMeal, object>>> Includes { get; }
+        public Expression<Func<ChildMeal, GroupingType>> Grouping { get; }
+        public Expression<Func<IGrouping<GroupingType, ChildMeal>, ResultType>> Selection { get; }
     }
 }

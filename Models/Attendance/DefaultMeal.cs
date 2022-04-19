@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 namespace Rollcall.Models
 {
-    public class DefaultAttendance
+    public class DefaultMeal
     {
         [ForeignKey("MealName")]
         public MealSchema Schema { get; set; }

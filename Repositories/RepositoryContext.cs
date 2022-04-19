@@ -14,9 +14,9 @@ namespace Rollcall.Repositories
             builder.Entity<Child>().HasKey(c => c.Id);
             builder.Entity<Group>().HasKey(g => g.Id);
             builder.Entity<MealSchema>().HasKey(s => s.Name);
-            builder.Entity<ChildAttendance>().HasKey(a => new { a.ChildId, a.MealName, a.Date });
-            builder.Entity<GroupAttendance>().HasKey(a => new { a.GroupId, a.MealName, a.Date });
-            builder.Entity<DefaultAttendance>().HasKey(a => new { a.ChildId, a.MealName });
+            builder.Entity<ChildMeal>().HasKey(a => new { a.ChildId, a.MealName, a.Date });
+            builder.Entity<GroupMask>().HasKey(a => new { a.GroupId, a.MealName, a.Date });
+            builder.Entity<DefaultMeal>().HasKey(a => new { a.ChildId, a.MealName });
 
             builder.Entity<MealSchema>().HasData(new MealSchema[]{
                 new MealSchema{Name = "breakfast"},
@@ -40,20 +40,20 @@ namespace Rollcall.Repositories
                 }
             });
 
-            builder.Entity<DefaultAttendance>().HasData(
-                new DefaultAttendance[]{
-                    new DefaultAttendance{ChildId = 1,MealName = "breakfast",Attendance=true},
-                    new DefaultAttendance{ChildId = 1,MealName = "dinner",Attendance=true},
-                    new DefaultAttendance{ChildId = 1,MealName = "desert",Attendance=false}
+            builder.Entity<DefaultMeal>().HasData(
+                new DefaultMeal[]{
+                    new DefaultMeal{ChildId = 1,MealName = "breakfast",Attendance=true},
+                    new DefaultMeal{ChildId = 1,MealName = "dinner",Attendance=true},
+                    new DefaultMeal{ChildId = 1,MealName = "desert",Attendance=false}
                 });
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Child> Children { get; set; }
         public DbSet<Group> Groups { get; set; }
 
-        public DbSet<ChildAttendance> ChildAttendance { get; set; }
-        public DbSet<GroupAttendance> GroupAttendance { get; set; }
-        public DbSet<DefaultAttendance> DefaultAttendance { get; set; }
+        public DbSet<ChildMeal> ChildAttendance { get; set; }
+        public DbSet<GroupMask> GroupAttendance { get; set; }
+        public DbSet<DefaultMeal> DefaultAttendance { get; set; }
         public DbSet<MealSchema> MealSchemas { get; set; }
     }
 }

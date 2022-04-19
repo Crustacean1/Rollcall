@@ -1,4 +1,4 @@
-using Rollcall.Repositories;
+using Rollcall.Models;
 
 namespace Rollcall.Services
 {
@@ -10,10 +10,10 @@ namespace Rollcall.Services
     {
 
     }
-    public interface IGroupMealService : IMealService
+    public interface IGroupMealService : IMealService<Group?>
     {
-        public IEnumerable<DailyMealInfoDto> GetDailyInfo(int groupId, int year, int month, int day);
-        public MonthlyMealInfoDto GetMonthlyInfo(int groupId, int year, int month, int day);
+        public IEnumerable<DailyMealInfoDto> GetDailyInfo(Group? group, int year, int month, int day);
+        public MonthlyMealInfoDto GetMonthlyInfo(Group? group, int year, int month, int day);
         public int ExtendDefaultAttendance(int year, int month);
     }
 }

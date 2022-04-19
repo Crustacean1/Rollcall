@@ -70,8 +70,8 @@ namespace Rollcall.Services
                 return null;
             }
 
-            var defaultMeals = dto.DefaultMeals is null ? new List<DefaultAttendance>() :
-             dto.DefaultMeals.Select(m => new DefaultAttendance { MealName = m.Key, Attendance = m.Value });
+            var defaultMeals = dto.DefaultMeals is null ? new List<DefaultMeal>() :
+             dto.DefaultMeals.Select(m => new DefaultMeal { MealName = m.Key, Attendance = m.Value });
 
             var child = new Child
             {
@@ -118,7 +118,7 @@ namespace Rollcall.Services
                 return null;
             }
 
-            var attendanceUpdate = newDto.Select(a => new DefaultAttendance { MealName = a.Key, Attendance = a.Value });
+            var attendanceUpdate = newDto.Select(a => new DefaultMeal { MealName = a.Key, Attendance = a.Value });
             var newAttendance = attendanceUpdate.Union(child.DefaultMeals, _comparer).ToList();
             child.DefaultMeals = newAttendance;
 
@@ -172,13 +172,13 @@ namespace Rollcall.Services
             };
         }
     }
-    class DefaultAttendanceComparer : IEqualityComparer<DefaultAttendance>
+    class DefaultAttendanceComparer : IEqualityComparer<DefaultMeal>
     {
-        public bool Equals(DefaultAttendance? a, DefaultAttendance? b)
+        public bool Equals(DefaultMeal? a, DefaultMeal? b)
         {
             return !(a is null || b is null || a.MealName != b.MealName);
         }
-        public int GetHashCode(DefaultAttendance a)
+        public int GetHashCode(DefaultMeal a)
         {
             return a.MealName.GetHashCode();
         }
