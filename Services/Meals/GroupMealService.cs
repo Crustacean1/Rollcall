@@ -36,12 +36,13 @@ namespace Rollcall.Services
             var mealSpecification = group is null ? new TotalSummarySpecification(year, month, day, true) : new TotalSummarySpecification(group, year, month, day, false);
             var meals = _summaryRepo.GetMeals(mealSpecification);
 
-            var maskSpecification = group is null ? new GroupMealSpecification(year, month, day) : new GroupMealSpecification(group, year, month, day);
+            var maskSpecification = group is null ? new GroupMealSpecification(new DateTime(year, month, day)) :
+             new GroupMealSpecification(group, new DateTime(year, month, day));
             var masks = _maskRepo.GetMeals(maskSpecification);
 
             return _shaper.ShapeDailySummary(meals, masks);
         }
-        public IEnumerable<DayAttendanceDto> GetDailySummaries(Group? group, int year, int month)
+        public IEnumerable<IDictionary<string, MealAttendanceDto>> GetDailySummaries(Group? group, int year, int month)
         {
             var mealSpecification = group is null ? new MonthlyAttendanceSpecification(year, month) : new MonthlyAttendanceSpecification(group, year, month);
             var meals = _summaryRepo.GetMeals(mealSpecification);
@@ -51,7 +52,7 @@ namespace Rollcall.Services
 
             return _shaper.MergeMealsWithMasks(meals, masks, year, month);
         }
-        public AttendanceCountDto GetMonthlySummary(Group? group, int year, int month)
+        public Dictionary<string, int> GetMonthlySummary(Group? group, int year, int month)
         {
             var mealSpec = group is null ? new TotalSummarySpecification(year, month, true) : new TotalSummarySpecification(group, year, month, true);
             var meals = _summaryRepo.GetMeals(mealSpec);
@@ -60,28 +61,37 @@ namespace Rollcall.Services
         public async Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, Group? group, int year, int month, int day)
         {
             var dateOfUpdate = new DateTime(year, month, day);
-            var mealUpdate = updateDto.Select(d => new GroupMask { MealName = d.Key, Attendance = d.Value, GroupId = group.Id, Date = dateOfUpdate });
-
+            var groupList = new List<Group>();
+            GroupMealSpecification spec;
             if (group is null)
             {
-                var groups = _groupRepo.GetGroups();
-                foreach (var subGroup in groups)
-                {
-                    UpdateGroupAttendance(subGroup, mealUpdate, dateOfUpdate);
-                }
+                spec = new GroupMealSpecification(dateOfUpdate);
+                groupList = _groupRepo.GetGroups().ToList();
             }
             else
             {
-                UpdateGroupAttendance(group, mealUpdate, dateOfUpdate);
+                spec = new GroupMealSpecification(group, dateOfUpdate);
+                groupList.Add(group);
             }
+
+            var mealUpdate = updateDto.Select(u => new GroupMask { MealName = u.Key, Attendance = u.Value });
+            var fullMealUpdate = mealUpdate.Join(groupList, a => true, a => true, (u, g) => new GroupMask
+            {
+                MealName = u.MealName,
+                Attendance = u.Attendance,
+                Date = dateOfUpdate,
+                GroupId = g.Id
+            });
+
+            UpdateGroupAttendance(spec, fullMealUpdate, dateOfUpdate);
 
             await _maskRepo.SaveChangesAsync();
 
-            return _shaper.ShapeUpdateResult(mealUpdate, new List<GroupMask>());//Dirty hack for now, does not reflect actual db state
+            return _shaper.ShapeUpdateResult(fullMealUpdate, new List<GroupMask>());//Dirty hack for now, does not reflect actual db state
         }
-        private void UpdateGroupAttendance(Group group, IEnumerable<GroupMask> update, DateTime dateOfUpdate)
+        private void UpdateGroupAttendance(GroupMealSpecification spec, IEnumerable<GroupMask> update, DateTime dateOfUpdate)
         {
-            var currentMeals = _maskRepo.GetMeals(new GroupMealSpecification(group, dateOfUpdate.Year, dateOfUpdate.Month, dateOfUpdate.Day)).ToList();
+            var currentMeals = _maskRepo.GetMeals(spec).ToList();
 
             var updatedMeals = update.Intersect(currentMeals, _comparer).ToList();
             var newMeals = update.Except(currentMeals, _comparer).ToList();

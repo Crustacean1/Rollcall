@@ -6,8 +6,8 @@ namespace Rollcall.Services
     public interface IMealService<TargetType>
     {
         public DayAttendanceDto GetDailySummary(TargetType target, int year, int month, int day);
-        public IEnumerable<DayAttendanceDto> GetDailySummaries(TargetType target, int year, int month);
-        public AttendanceCountDto GetMonthlySummary(TargetType target, int year, int month);
+        public IEnumerable<IDictionary<string,MealAttendanceDto>> GetDailySummaries(TargetType target, int year, int month);
+        public Dictionary<string,int> GetMonthlySummary(TargetType target, int year, int month);
         public Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, TargetType target, int year, int month, int day);
     }
 }

@@ -66,10 +66,10 @@ namespace Rollcall.Controllers
         [Route("{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(FutureDateValidationFilter))]
         [ServiceFilter(typeof(GroupExtractorFilter))]
-        public async Task<ActionResult<AttendanceRequestDto>> SetAttendance(int groupId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
+        public async Task<ActionResult<IDictionary<string, bool>>> SetAttendance(int groupId, int year, int month, int day, [FromBody] IDictionary<string, bool> update)
         {
             var result = await _groupService.UpdateAttendance(update, (Group)HttpContext.Items["group"], year, month, day);
-            return Ok(result);
+            return Ok(result.Meals);
         }
     }
 }

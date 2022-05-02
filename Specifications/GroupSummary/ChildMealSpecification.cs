@@ -17,7 +17,7 @@ namespace Rollcall.Specifications
         }
         public ChildMealSpecification(Child child, int year, int month, int day)
         {
-            Condition = (ChildMeal a) => a.ChildId == child.GroupId && a.Date == new DateTime(year, month, day);
+            Condition = (ChildMeal a) => a.ChildId == child.Id && a.Date == new DateTime(year, month, day);
             Includes = new List<Expression<Func<ChildMeal, object>>>();
             Tracking = false;
         }

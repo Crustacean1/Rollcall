@@ -5,6 +5,11 @@ namespace Rollcall.Services
 {
     public class MealShaper
     {
+        private readonly ILogger<MealShaper> _logger;
+        public MealShaper(ILogger<MealShaper> logger)
+        {
+            _logger = logger;
+        }
         public AttendanceUpdateResultDto ShapeUpdateResult<MealType>(IEnumerable<MealType> updatedAttendance, IEnumerable<MealType> createdAttendance) where MealType : IMeal
         {
             return new AttendanceUpdateResultDto
@@ -14,31 +19,31 @@ namespace Rollcall.Services
                 .ToDictionary(m => m.MealName, m => m.Attendance)
             };
         }
-        public IEnumerable<DayAttendanceDto> MergeMealsWithMasks(IEnumerable<DailyMeal> meals,
+        public IEnumerable<IDictionary<string, MealAttendanceDto>> MergeMealsWithMasks(IEnumerable<DailyMeal> meals,
          IEnumerable<GroupMask> masks, int year, int month)
         {
-            var daysInMonth = new List<DayAttendanceDto>();
-            for (int i = 0; i < DateTime.DaysInMonth(year, month); ++i)
+            var daysInMonth = new List<IDictionary<string, MealAttendanceDto>>();
+            for (int i = 0; i < DateTime.DaysInMonth(year, month) + 1; ++i)
             {
-                daysInMonth.Add(new DayAttendanceDto());
+                daysInMonth.Add(new Dictionary<string, MealAttendanceDto>());
             }
             foreach (var meal in meals)
             {
-                if (daysInMonth[meal.DayOfMonth].Meals.ContainsKey(meal.MealName))
+                if (daysInMonth[meal.DayOfMonth].ContainsKey(meal.MealName))
                 {
-                    daysInMonth[meal.DayOfMonth].Meals[meal.MealName].Present = meal.Total;
+                    daysInMonth[meal.DayOfMonth][meal.MealName].Present = meal.Total;
                     continue;
                 }
-                daysInMonth[meal.DayOfMonth].Meals.Add(meal.MealName, new MealAttendanceDto { Present = meal.Total, Masked = false });
+                daysInMonth[meal.DayOfMonth].Add(meal.MealName, new MealAttendanceDto { Present = meal.Total, Masked = false });
             }
             foreach (var mask in masks)
             {
-                if (daysInMonth[mask.Date.Day].Meals.ContainsKey(mask.MealName))
+                if (daysInMonth[mask.Date.Day].ContainsKey(mask.MealName))
                 {
-                    daysInMonth[mask.Date.Day].Meals[mask.MealName].Masked = mask.Attendance;
+                    daysInMonth[mask.Date.Day][mask.MealName].Masked = mask.Attendance;
                     continue;
                 }
-                daysInMonth[mask.Date.Day].Meals.Add(mask.MealName, new MealAttendanceDto { Present = 0, Masked = mask.Attendance });
+                daysInMonth[mask.Date.Day].Add(mask.MealName, new MealAttendanceDto { Present = 0, Masked = mask.Attendance });
             }
             return daysInMonth;
         }
@@ -51,9 +56,9 @@ namespace Rollcall.Services
             }
             return new DayAttendanceDto { Meals = result };
         }
-        public AttendanceCountDto ShapeMonthlySummary(IEnumerable<TotalSummaryResult> meals)
+        public Dictionary<string, int> ShapeMonthlySummary(IEnumerable<TotalSummaryResult> meals)
         {
-            return new AttendanceCountDto { Meals = meals.ToDictionary(a => a.MealName, a => a.Total) };
+            return meals.ToDictionary(a => a.MealName, a => a.Total);
         }
         public IEnumerable<MealInfoDto> ShapeInfo(IEnumerable<MealInfo> info)
         {

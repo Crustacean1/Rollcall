@@ -76,8 +76,8 @@ class Program
 
         builder.Services.AddScoped<MealShaper>();
 
-        builder.Services.AddScoped<IEqualityComparer<ChildMeal>, MealComparer<ChildMeal>>();
-        builder.Services.AddScoped<IEqualityComparer<GroupMask>, MealComparer<GroupMask>>();
+        builder.Services.AddScoped<IEqualityComparer<ChildMeal>, ChildMealComparer>();
+        builder.Services.AddScoped<IEqualityComparer<GroupMask>, GroupMealComparer>();
     }
     static public void Main(String[] args)
     {

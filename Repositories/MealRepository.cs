@@ -10,8 +10,7 @@ namespace Rollcall.Repositories
         public IEnumerable<MealType> GetMeals(ISpecification<MealType> spec)
         {
             var query = spec.Tracking ? _context.Set<MealType>() : _context.Set<MealType>().AsNoTracking();
-            var extendedQuery = IncludeOthers(query, spec.Includes);
-            return extendedQuery.Where(spec.Condition);
+            return query.Where(spec.Condition);
         }
         public void UpdateMeals(IEnumerable<MealType> masks)
         {

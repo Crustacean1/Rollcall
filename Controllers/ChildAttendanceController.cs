@@ -30,7 +30,7 @@ namespace Rollcall.Controllers
         [Route("monthly/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         [ServiceFilter(typeof(ChildExtractorFilter))]
-        public ActionResult<AttendanceCountDto> GetMonthlyCount(int childId, int year, int month)
+        public ActionResult<IDictionary<string, int>> GetMonthlyCount(int childId, int year, int month)
         {
             return _mealService.GetMonthlySummary((Child)HttpContext.Items["child"], year, month);
         }
@@ -39,7 +39,7 @@ namespace Rollcall.Controllers
         [Route("daily/{childId}/{year}/{month}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         [ServiceFilter(typeof(ChildExtractorFilter))]
-        public ActionResult<IEnumerable<DayAttendanceDto>> GetChildMonthlyAttendance(int childId, int year, int month)
+        public ActionResult<IEnumerable<IDictionary<string, MealAttendanceDto>>> GetChildMonthlyAttendance(int childId, int year, int month)
         {
             _logger.LogInformation($"getting monthly attendance of {childId}");
             return _mealService.GetDailySummaries((Child)HttpContext.Items["child"], year, month).ToList();

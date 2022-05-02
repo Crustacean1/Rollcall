@@ -69,7 +69,7 @@ namespace Rollcall.Controllers
 
         [HttpPatch, Authorize]
         [Route("{childId}")]
-        public async Task<ActionResult<IEnumerable<AttendanceRequestDto>>> UpdateDefaultMeal(int childId, [FromBody] IDictionary<string, bool> update)
+        public async Task<ActionResult<IDictionary<string, bool>>> UpdateDefaultMeal(int childId, [FromBody] IDictionary<string, bool> update)
         {
             var newDefault = await _childService.UpdateChild(childId, update);
             if (newDefault is null)
