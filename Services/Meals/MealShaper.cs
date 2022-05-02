@@ -10,12 +10,11 @@ namespace Rollcall.Services
         {
             _logger = logger;
         }
-        public AttendanceUpdateResultDto ShapeUpdateResult<MealType>(IEnumerable<MealType> updatedAttendance, IEnumerable<MealType> createdAttendance) where MealType : IMeal
+        public AttendanceUpdateResultDto ShapeUpdateResult<MealType>(IEnumerable<MealType> updatedAttendance) where MealType : IMeal
         {
             return new AttendanceUpdateResultDto
             {
                 Meals = updatedAttendance
-                .Union(createdAttendance)
                 .ToDictionary(m => m.MealName, m => m.Attendance)
             };
         }

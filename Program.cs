@@ -25,7 +25,7 @@ class Program
         builder.Services.AddScoped<MealSchemaRepository>();
 
         builder.Services.AddScoped<MealRepository<ChildMeal>>();
-        builder.Services.AddScoped<MealRepository<GroupMask>>();
+        builder.Services.AddScoped<MaskRepository>();
     }
     static private void ConfigureAuthentication()
     {

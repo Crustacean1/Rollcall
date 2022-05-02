@@ -9,11 +9,11 @@ namespace Rollcall.Services
         private readonly IEqualityComparer<ChildMeal> _comparer;
         private readonly SummaryRepository _summaryRepo;
         private readonly MealRepository<ChildMeal> _mealRepo;
-        private readonly MealRepository<GroupMask> _maskRepo;
+        private readonly MaskRepository _maskRepo;
         private readonly MealShaper _shaper;
         private readonly ILogger<ChildMealService> _logger;
         public ChildMealService(MealRepository<ChildMeal> mealRepo,
-                                MealRepository<GroupMask> maskRepo,
+                                MaskRepository maskRepo,
                                 SummaryRepository summaryRepo,
                                 MealShaper mealShaper,
                                 IEqualityComparer<ChildMeal> comparer,
@@ -51,12 +51,10 @@ namespace Rollcall.Services
         }
         public async Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, Child child, int year, int month, int day)
         {
-            _logger.LogInformation($"updating meals for: {child.Name}");
             var dateOfUpdate = new DateTime(year, month, day);
 
             var currentMeals = _mealRepo.GetMeals(new ChildMealSpecification(child, year, month, day)).ToList();
             var mealUpdate = updateDto.Select(d => new ChildMeal { MealName = d.Key, Attendance = d.Value, ChildId = child.Id, Date = dateOfUpdate });
-            _logger.LogInformation($"Found: {currentMeals.Count()} meals in this day");
 
             var updatedMeals = mealUpdate.Intersect(currentMeals, _comparer).ToList();
             var newMeals = mealUpdate.Except(currentMeals, _comparer).ToList();
@@ -66,7 +64,7 @@ namespace Rollcall.Services
 
             await _mealRepo.SaveChangesAsync();
 
-            return _shaper.ShapeUpdateResult(updatedMeals, newMeals);
+            return _shaper.ShapeUpdateResult(updatedMeals.Union(newMeals));
         }
     }
 }
