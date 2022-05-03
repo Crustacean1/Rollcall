@@ -9,7 +9,7 @@ namespace Rollcall.Specifications
     {
         public bool Masked { get; }
         public Expression<Func<ChildMeal, bool>> Condition { get; }
-        public IEnumerable<Expression<Func<ChildMeal, object>>> Includes { get; }
+        public IEnumerable<string> Includes { get; }
         public Expression<Func<ChildMeal, GroupingType>> Grouping { get; }
         public Expression<Func<IGrouping<GroupingType, ChildMeal>, ResultType>> Selection { get; }
     }

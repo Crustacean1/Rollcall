@@ -1,30 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 
-using Rollcall.Specifications;
+using Rollcall.Models;
 
 namespace Rollcall.Repositories
 {
-    public class MealRepository<MealType> : RepositoryBase where MealType : class
+    public class MealRepository : BaseMealRepository<ChildMeal>
     {
-        public MealRepository(RepositoryContext context) : base(context) { }
-        public IEnumerable<MealType> GetMeals(ISpecification<MealType> spec)
+        public MealRepository(RepositoryContext context) : base(context)
+        { }
+        public IEnumerable<DefaultMeal> GetMealsToExtend(int year, int month)
         {
-            var query = spec.Tracking ? _context.Set<MealType>() : _context.Set<MealType>().AsNoTracking();
-            return query.Where(spec.Condition);
-        }
-        public void UpdateMeals(IEnumerable<MealType> masks)
-        {
-            foreach (var mask in masks)
-            {
-                _context.Entry(mask).State = EntityState.Modified;
-            }
-        }
-        public void CreateMeals(IEnumerable<MealType> masks)
-        {
-            foreach (var mask in masks)
-            {
-                _context.Entry(mask).State = EntityState.Added;
-            }
+            var children = _context.Set<Child>().AsNoTracking()
+            .Include(c => c.DefaultMeals);
+
+            var childrenWithNoMeals = children.Where(c => c.DailyMeals.Where(m => m.Date.Year == year && m.Date.Month == month).Count() == 0)
+            .SelectMany(c => c.DefaultMeals,(c,m) => m);
+
+            return childrenWithNoMeals;
         }
     }
 }

@@ -7,17 +7,17 @@ namespace Rollcall.Specifications
     public class GroupInfoSpecification : ISummarySpecification<InfoGrouping, MealInfo>
     {
         public Expression<Func<ChildMeal, bool>> Condition { get; }
-        public IEnumerable<Expression<Func<ChildMeal, object>>> Includes { get; }
+        public IEnumerable<string> Includes { get; }
         public Expression<Func<ChildMeal, InfoGrouping>> Grouping { get; }
         public Expression<Func<IGrouping<InfoGrouping, ChildMeal>, MealInfo>> Selection { get; }
         public bool Masked { get; }
-        public GroupInfoSpecification(Group group, int year, int month, int day) : this()
+        public GroupInfoSpecification(Group group, DateTime date) : this()
         {
-            Condition = (ChildMeal m) => m.TargetChild.GroupId == group.Id && m.Date == new DateTime(year, month, day);
+            Condition = (ChildMeal m) => m.TargetChild.GroupId == group.Id && m.Date == date;
         }
-        public GroupInfoSpecification(int year, int month, int day) : this()
+        public GroupInfoSpecification(DateTime date) : this()
         {
-            Condition = (ChildMeal m) => m.Date == new DateTime(year, month, day);
+            Condition = (ChildMeal m) => m.Date == date;
         }
         public GroupInfoSpecification(Group group, int year, int month) : this()
         {
@@ -29,9 +29,7 @@ namespace Rollcall.Specifications
         }
         private GroupInfoSpecification()
         {
-            Includes = new List<Expression<Func<ChildMeal, object>>>{
-                m => m.TargetChild,
-            };
+            Includes = new List<string> { "TargetChild" , "TargetChild.MyGroup"};
             Grouping = (ChildMeal m) => new InfoGrouping
             {
                 ChildId = m.ChildId,
@@ -46,6 +44,7 @@ namespace Rollcall.Specifications
                 Surname = a.Key.ChildSurname,
                 ChildId = a.Key.ChildId,
                 MealName = a.Key.MealName,
+                GroupName = a.Key.GroupName,
                 Total = a.Count()
             };
         }

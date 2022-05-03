@@ -4,8 +4,8 @@ namespace Rollcall.Models
     {
         public string Name { get; set; }
         public string Surname { get; set; }
-        public string GroupName { get; set; }
         public int ChildId { get; set; }
+        public string GroupName { get; set; }
         public Dictionary<string, int> Summary { get; set; }
     };
 }

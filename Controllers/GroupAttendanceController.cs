@@ -37,7 +37,7 @@ namespace Rollcall.Controllers
         [Route("childlist/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         [ServiceFilter(typeof(GroupExtractorFilter))]
-        public ActionResult<IEnumerable<DailyChildAttendanceDto>> GetDailySummary(int groupId, int year, int month, int day)
+        public ActionResult<IDictionary<string, GroupMealInfoDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
             var result = _groupService.GetDailyInfo((Group)HttpContext.Items["group"], year, month, day);
             return Ok(result);

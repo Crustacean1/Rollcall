@@ -59,7 +59,27 @@ namespace Rollcall.Services
         {
             return meals.ToDictionary(a => a.MealName, a => a.Total);
         }
-        public IEnumerable<MealInfoDto> ShapeInfo(IEnumerable<MealInfo> info)
+        public IDictionary<string, GroupMealInfoDto> ShapeDailyInfo(IEnumerable<MealInfo> info, IEnumerable<GroupMask> masks)
+        {
+            return info
+            .GroupBy(o => new { o.GroupName, o.GroupId })
+            .ToDictionary(child => child.Key.GroupName, child => new GroupMealInfoDto
+            {
+                Children = child.GroupBy(m => new { m.ChildId, m.Name, m.Surname })
+                .Select(
+                m => new MealInfoDto
+                {
+                    Name = m.Key.Name,
+                    Surname = m.Key.Surname,
+                    ChildId = m.Key.ChildId,
+                    GroupName = child.Key.GroupName,
+                    Summary = m.ToDictionary(a => a.MealName, a => a.Total)
+                }),
+                Masks = masks.Where(m => m.GroupId == child.Key.GroupId)
+                .ToDictionary(m => m.MealName, m => m.Attendance)
+            });
+        }
+        public IEnumerable<MealInfoDto> ShapeMonthlyInfo(IEnumerable<MealInfo> info)
         {
             return info
             .GroupBy(i => new { i.Name, i.Surname, i.ChildId, i.GroupName })
@@ -67,8 +87,8 @@ namespace Rollcall.Services
             {
                 Name = child.Key.Name,
                 Surname = child.Key.Surname,
-                GroupName = child.Key.GroupName,
                 ChildId = child.Key.ChildId,
+                GroupName = child.Key.GroupName,
                 Summary = child.ToDictionary(m => m.MealName, m => m.Total)
             });
         }

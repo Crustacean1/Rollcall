@@ -28,7 +28,7 @@ namespace Rollcall.Repositories
 
             return leftJoin.GroupBy(spec.Grouping).Select(spec.Selection);
         }
-        public IEnumerable<MealInfo> GetMealInfo(GroupInfoSpecification spec)
+        public IEnumerable<MealInfo> GetMealInfo<GroupingType>(ISummarySpecification<GroupingType, MealInfo> spec) where GroupingType : class
         {
             var query = _context.Set<ChildMeal>()
             .AsNoTracking()

@@ -5,7 +5,7 @@ using Rollcall.Models;
 
 namespace Rollcall.Repositories
 {
-    public class MaskRepository : MealRepository<GroupMask>
+    public class MaskRepository : BaseMealRepository<GroupMask>
     {
         public MaskRepository(RepositoryContext context) : base(context)
         { }

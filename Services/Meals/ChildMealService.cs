@@ -8,11 +8,11 @@ namespace Rollcall.Services
     {
         private readonly IEqualityComparer<ChildMeal> _comparer;
         private readonly SummaryRepository _summaryRepo;
-        private readonly MealRepository<ChildMeal> _mealRepo;
+        private readonly MealRepository _mealRepo;
         private readonly MaskRepository _maskRepo;
         private readonly MealShaper _shaper;
         private readonly ILogger<ChildMealService> _logger;
-        public ChildMealService(MealRepository<ChildMeal> mealRepo,
+        public ChildMealService(MealRepository mealRepo,
                                 MaskRepository maskRepo,
                                 SummaryRepository summaryRepo,
                                 MealShaper mealShaper,
