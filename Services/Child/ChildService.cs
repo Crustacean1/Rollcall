@@ -71,7 +71,7 @@ namespace Rollcall.Services
             }
 
             var defaultMeals = dto.DefaultMeals is null ? new List<DefaultMeal>() :
-             dto.DefaultMeals.Select(m => new DefaultMeal { MealName = m.Key, Attendance = m.Value });
+             dto.DefaultMeals.Select(m => new DefaultMeal { MealName = m.Key, Attendance = m.Value }).ToList();
 
             var child = new Child
             {

@@ -23,29 +23,6 @@ namespace Rollcall.Repositories
                 new MealSchema{Name = "dinner"},
                 new MealSchema{Name = "desert"}
             });
-
-            builder.Entity<Group>().HasData(new Group[]{
-                new Group{
-                    Name = "AEII",
-                    Id = 1
-                }
-            });
-
-            builder.Entity<Child>().HasData(new Child[]{
-                new Child{
-                    Name = "Kamil",
-                    Surname = "Kowalski",
-                    GroupId = 1,
-                    Id = 1
-                }
-            });
-
-            builder.Entity<DefaultMeal>().HasData(
-                new DefaultMeal[]{
-                    new DefaultMeal{ChildId = 1,MealName = "breakfast",Attendance=true},
-                    new DefaultMeal{ChildId = 1,MealName = "dinner",Attendance=true},
-                    new DefaultMeal{ChildId = 1,MealName = "desert",Attendance=false}
-                });
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Child> Children { get; set; }

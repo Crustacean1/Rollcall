@@ -116,9 +116,10 @@ namespace Rollcall.Services
                 MealName = m.MealName,
                 Attendance = m.Attendance
             });
+            var updatedMealCount = mealsToCreate.GroupBy(m => m.ChildId).Count();
             _mealRepo.CreateMeals(mealsToCreate);
             await _mealRepo.SaveChangesAsync();
-            return mealsToCreate.Count();
+            return updatedMealCount;
         }
         private async Task<AttendanceUpdateResultDto> SaveAttendance(GroupMealSpecification spec, IEnumerable<GroupMask> update, DateTime dateOfUpdate)
         {

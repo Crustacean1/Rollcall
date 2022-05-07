@@ -81,5 +81,13 @@ namespace Rollcall.Controllers
             var result = await _groupService.UpdateAttendance(update, (Group)HttpContext.Items["group"], year, month, day);
             return Ok(result.Meals);
         }
+        [HttpPost, Authorize]
+        [Route("extend/{year}/{month}")]
+        public async Task<ActionResult<int>> ExtendAttendance(int year, int month)
+        {
+            var result = await _groupService.ExtendDefaultAttendance(year, month);
+            return result;
+        }
+
     }
 }
