@@ -8,8 +8,8 @@ namespace Rollcall.Services
     }
     public interface IGroupMealService : IMealService<Group?>
     {
-        public IDictionary<string, GroupMealInfoDto> GetDailyInfo(Group? group, int year, int month, int day);
+        public IEnumerable<GroupMealInfoDto> GetDailyInfo(Group? group, int year, int month, int day);
         public IEnumerable<MealInfoDto> GetMonthlyInfo(Group? group, int year, int month);
-        public int ExtendDefaultAttendance(int year, int month);
+        public Task<int> ExtendDefaultAttendance(int year, int month);
     }
 }

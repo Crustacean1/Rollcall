@@ -4,57 +4,54 @@ using Rollcall.Models;
 
 namespace Rollcall.Specifications
 {
-    public class GroupInfoSpecification : ISummarySpecification<InfoGrouping, MealInfo>
+    public class MealSummarySpecification : ISummarySpecification<InfoGrouping, MealInfo>
     {
         public Expression<Func<ChildMeal, bool>> Condition { get; }
+        public Expression<Func<Child, bool>> SummaryCondition { get; }
         public IEnumerable<string> Includes { get; }
         public Expression<Func<ChildMeal, InfoGrouping>> Grouping { get; }
         public Expression<Func<IGrouping<InfoGrouping, ChildMeal>, MealInfo>> Selection { get; }
         public bool Masked { get; }
-        public GroupInfoSpecification(Group group, DateTime date) : this()
-        {
-            Condition = (ChildMeal m) => m.TargetChild.GroupId == group.Id && m.Date == date;
-        }
-        public GroupInfoSpecification(DateTime date) : this()
+        public MealSummarySpecification(Group group, DateTime date, bool masked = false) : this(masked)
         {
             Condition = (ChildMeal m) => m.Date == date;
+            SummaryCondition = (Child c) => c.GroupId == group.Id;
         }
-        public GroupInfoSpecification(Group group, int year, int month) : this()
+        public MealSummarySpecification(DateTime date, bool masked = false) : this(masked)
         {
-            Condition = (ChildMeal m) => m.TargetChild.GroupId == group.Id && m.Date.Year == year && m.Date.Month == month;
+            Condition = (ChildMeal m) => m.Date == date;
+            SummaryCondition = (Child c) => true;
         }
-        public GroupInfoSpecification(int year, int month) : this()
+        public MealSummarySpecification(Group group, int year, int month, bool masked = false) : this(masked)
         {
             Condition = (ChildMeal m) => m.Date.Year == year && m.Date.Month == month;
+            SummaryCondition = (Child c) => c.GroupId == group.Id;
         }
-        private GroupInfoSpecification()
+        public MealSummarySpecification(int year, int month, bool masked = false) : this(masked)
         {
-            Includes = new List<string> { "TargetChild" , "TargetChild.MyGroup"};
+            Condition = (ChildMeal m) => m.Date.Year == year && m.Date.Month == month;
+            SummaryCondition = (Child c) => true;
+        }
+        private MealSummarySpecification(bool masked)
+        {
+            Includes = new List<string> { };
             Grouping = (ChildMeal m) => new InfoGrouping
             {
                 ChildId = m.ChildId,
-                ChildName = m.TargetChild.Name,
-                ChildSurname = m.TargetChild.Surname,
-                GroupName = m.TargetChild.MyGroup.Name,
                 MealName = m.MealName
             };
             Selection = (a) => new MealInfo
             {
-                Name = a.Key.ChildName,
-                Surname = a.Key.ChildSurname,
                 ChildId = a.Key.ChildId,
                 MealName = a.Key.MealName,
-                GroupName = a.Key.GroupName,
                 Total = a.Count()
             };
+            Masked = masked;
         }
     }
     public class InfoGrouping
     {
         public int ChildId { get; set; }
-        public string ChildName { get; set; }
-        public string ChildSurname { get; set; }
-        public string GroupName { get; set; }
         public string MealName { get; set; }
     }
 }

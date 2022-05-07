@@ -6,6 +6,6 @@ namespace Rollcall.Models
         public string Surname { get; set; }
         public int ChildId { get; set; }
         public string GroupName { get; set; }
-        public Dictionary<string, int> Summary { get; set; }
+        public Dictionary<string, int> Meals { get; set; }
     };
 }

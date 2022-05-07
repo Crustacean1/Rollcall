@@ -8,20 +8,21 @@ namespace Rollcall.Repositories
     public class MaskRepository : BaseMealRepository<GroupMask>
     {
         public MaskRepository(RepositoryContext context) : base(context)
-        { }
+        {
+        }
         public IEnumerable<GroupMask> GetTotalMask(ISpecification<GroupMask> spec)
         {
-            var groupQuery = _context.Set<Group>()
-            .AsNoTracking();
-            var maskQuery = _context.Set<GroupMask>().Where(spec.Condition);
-            return groupQuery.GroupJoin(maskQuery, g => g.Id, m => m.GroupId, (g, m) => new { g, m })
-            .SelectMany(j => j.m.DefaultIfEmpty(), (l, m) => new { Present = m.Attendance, Date = m.Date, GroupId = l.g.Id , MealName = m.MealName})
+            var groupCount = _context.Set<Group>().Count();
+
+            var maskQuery = _context.Set<GroupMask>().Where(spec.Condition).Where(m => m.Attendance);
+            return maskQuery
             .GroupBy(m => new { m.Date, m.MealName })
+            .Where(m => m.Count() == groupCount)
             .Select(t => new GroupMask
             {
-                Attendance = t.All(m => m.Present == true),
                 Date = t.Key.Date,
-                MealName = t.Key.MealName
+                MealName = t.Key.MealName,
+                Attendance = true
             });
         }
     }

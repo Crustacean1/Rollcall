@@ -49,7 +49,7 @@ namespace Rollcall.Controllers
         [Route("daily/{childId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         [ServiceFilter(typeof(ChildExtractorFilter))]
-        public ActionResult<DayAttendanceDto> GetChildAttendance(int childId, int year, int month, int day)
+        public ActionResult<IDictionary<string,MealAttendanceDto>> GetChildAttendance(int childId, int year, int month, int day)
         {
             return _mealService.GetDailySummary((Child)HttpContext.Items["child"], year, month, day);
         }

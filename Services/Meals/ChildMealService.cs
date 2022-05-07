@@ -28,7 +28,7 @@ namespace Rollcall.Services
 
             _logger = logger;
         }
-        public DayAttendanceDto GetDailySummary(Child child, int year, int month, int day)
+        public Dictionary<string,MealAttendanceDto> GetDailySummary(Child child, int year, int month, int day)
         {
             _logger.LogInformation("Daily Meal");
             var meals = _mealRepo.GetMeals(new ChildMealSpecification(child, year, month, day))
@@ -46,7 +46,7 @@ namespace Rollcall.Services
         }
         public Dictionary<string, int> GetMonthlySummary(Child child, int year, int month)
         {
-            var meals = _summaryRepo.GetMeals(new TotalSummarySpecification(child, year, month, true));
+            var meals = _summaryRepo.GetMeals(new MealCountSpecification(child, year, month, true));
             return _shaper.ShapeMonthlySummary(meals);
         }
         public async Task<AttendanceUpdateResultDto> UpdateAttendance(IDictionary<string, bool> updateDto, Child child, int year, int month, int day)

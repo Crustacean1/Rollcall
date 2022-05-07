@@ -37,9 +37,19 @@ namespace Rollcall.Controllers
         [Route("childlist/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(DateValidationFilter))]
         [ServiceFilter(typeof(GroupExtractorFilter))]
-        public ActionResult<IDictionary<string, GroupMealInfoDto>> GetDailySummary(int groupId, int year, int month, int day)
+        public ActionResult<IEnumerable<GroupMealInfoDto>> GetDailySummary(int groupId, int year, int month, int day)
         {
             var result = _groupService.GetDailyInfo((Group)HttpContext.Items["group"], year, month, day);
+            return Ok(result);
+        }
+
+        [HttpGet, Authorize]
+        [Route("childlist/{groupId}/{year}/{month}/")]
+        [ServiceFilter(typeof(DateValidationFilter))]
+        [ServiceFilter(typeof(GroupExtractorFilter))]
+        public ActionResult<IEnumerable<GroupMealInfoDto>> GetMonthlySummary(int groupId, int year, int month)
+        {
+            var result = _groupService.GetMonthlyInfo((Group)HttpContext.Items["group"], year, month);
             return Ok(result);
         }
 
@@ -56,7 +66,7 @@ namespace Rollcall.Controllers
         [HttpGet, Authorize]
         [Route("daily/{groupId}/{year}/{month}/{day}")]
         [ServiceFilter(typeof(GroupExtractorFilter))]
-        public ActionResult<DayAttendanceDto> GetDailyCount(int groupId, int year, int month, int day)
+        public ActionResult<IDictionary<string, MealAttendanceDto>> GetDailyCount(int groupId, int year, int month, int day)
         {
             var result = _groupService.GetDailySummary((Group)HttpContext.Items["group"], year, month, day);
             return Ok(result);

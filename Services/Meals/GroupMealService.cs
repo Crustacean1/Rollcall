@@ -31,9 +31,11 @@ namespace Rollcall.Services
 
             _logger = logger;
         }
-        public DayAttendanceDto GetDailySummary(Group? group, int year, int month, int day)
+        public Dictionary<string, MealAttendanceDto> GetDailySummary(Group? group, int year, int month, int day)
         {
-            var mealSpecification = new TotalSummarySpecification(year, month, day, group is null);
+            var mealSpecification = group is null ? new MealCountSpecification(year, month, day, true) :
+            new MealCountSpecification(group, year, month, day, false);
+
             var meals = _summaryRepo.GetMeals(mealSpecification);
 
             var masks = group is null ? _maskRepo.GetTotalMask(new GroupMealSpecification(new DateTime(year, month, day))) :
@@ -53,7 +55,7 @@ namespace Rollcall.Services
         }
         public Dictionary<string, int> GetMonthlySummary(Group? group, int year, int month)
         {
-            var mealSpec = group is null ? new TotalSummarySpecification(year, month, true) : new TotalSummarySpecification(group, year, month, true);
+            var mealSpec = group is null ? new MealCountSpecification(year, month, true) : new MealCountSpecification(group, year, month, true);
             var meals = _summaryRepo.GetMeals(mealSpec);
             return _shaper.ShapeMonthlySummary(meals);
         }
@@ -85,6 +87,39 @@ namespace Rollcall.Services
 
             return await SaveAttendance(spec, fullMealUpdate, dateOfUpdate);
         }
+        public IEnumerable<GroupMealInfoDto> GetDailyInfo(Group? group, int year, int month, int day)
+        {
+            var specification = group is null ? new MealSummarySpecification(new DateTime(year, month, day)) :
+                                                new MealSummarySpecification(group, new DateTime(year, month, day));
+
+            var dailyInfo = _summaryRepo.GetMealSummary(specification);
+
+            var dailyMasks = _maskRepo.GetMeals(group is null ? new GroupMealSpecification(new DateTime(year, month, day)) :
+                                                        new GroupMealSpecification(group, new DateTime(year, month, day)));
+
+            return _shaper.ShapeDailyInfo(dailyInfo, dailyMasks);
+        }
+        public IEnumerable<MealInfoDto> GetMonthlyInfo(Group? group, int year, int month)
+        {
+            var specification = group is null ? new MealSummarySpecification(year, month, true) : new MealSummarySpecification(group, year, month, true);
+            var monthlyInfo = _summaryRepo.GetMealSummary(specification);
+            return _shaper.ShapeMonthlyInfo(monthlyInfo);
+        }
+        public async Task<int> ExtendDefaultAttendance(int year, int month)
+        {
+            var defaultMealsToExtend = _mealRepo.GetMealsToExtend(year, month);
+            var mealsToCreate = defaultMealsToExtend.Join(Enumerable.Range(1, DateTime.DaysInMonth(year, month)), m => true, c => true,
+            (m, d) => new ChildMeal
+            {
+                Date = new DateTime(year, month, d),
+                ChildId = m.ChildId,
+                MealName = m.MealName,
+                Attendance = m.Attendance
+            });
+            _mealRepo.CreateMeals(mealsToCreate);
+            await _mealRepo.SaveChangesAsync();
+            return mealsToCreate.Count();
+        }
         private async Task<AttendanceUpdateResultDto> SaveAttendance(GroupMealSpecification spec, IEnumerable<GroupMask> update, DateTime dateOfUpdate)
         {
             var currentMeals = _maskRepo.GetMeals(spec).ToList();
@@ -100,36 +135,6 @@ namespace Rollcall.Services
             .GroupBy(m => new { m.Date, m.MealName })
             .Select(m => new GroupMask { Date = m.Key.Date, MealName = m.Key.MealName, Attendance = m.All(mask => mask.Attendance == true) });
             return _shaper.ShapeUpdateResult(response);
-        }
-        public IDictionary<string, GroupMealInfoDto> GetDailyInfo(Group? group, int year, int month, int day)
-        {
-            var specification = group is null ? new GroupInfoSpecification(new DateTime(year, month, day)) :
-                                                new GroupInfoSpecification(group, new DateTime(year, month, day));
-
-            var dailyInfo = _summaryRepo.GetMealInfo(specification);
-            var dailyMasks = _maskRepo.GetMeals(group is null ? new GroupMealSpecification(new DateTime(year, month, day)) :
-                                                        new GroupMealSpecification(group, new DateTime(year, month, day)));
-
-            return _shaper.ShapeDailyInfo(dailyInfo, dailyMasks);
-        }
-        public IEnumerable<MealInfoDto> GetMonthlyInfo(Group? group, int year, int month)
-        {
-            var specification = group is null ? new GroupInfoSpecification(year, month) : new GroupInfoSpecification(group, year, month);
-            var monthlyInfo = _summaryRepo.GetMealInfo(specification);
-            return _shaper.ShapeMonthlyInfo(monthlyInfo);
-        }
-        public int ExtendDefaultAttendance(int year, int month)
-        {
-            var defaultMealsToExtend = _mealRepo.GetMealsToExtend(year, month);
-            var mealsToInsert = defaultMealsToExtend.Join(Enumerable.Range(1, DateTime.DaysInMonth(year, month)), m => true, c => true,
-            (m, d) => new ChildMeal
-            {
-                Date = new DateTime(year, month, d),
-                ChildId = m.ChildId,
-                MealName = m.MealName,
-                Attendance = m.Attendance
-            });
-            return 0;
         }
     }
 }

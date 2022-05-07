@@ -26,6 +26,7 @@ namespace Rollcall.Services
             {
                 daysInMonth.Add(new Dictionary<string, MealAttendanceDto>());
             }
+
             foreach (var meal in meals)
             {
                 if (daysInMonth[meal.DayOfMonth].ContainsKey(meal.MealName))
@@ -46,36 +47,46 @@ namespace Rollcall.Services
             }
             return daysInMonth;
         }
-        public DayAttendanceDto ShapeDailySummary(IEnumerable<TotalSummaryResult> meals, IEnumerable<GroupMask> masks)
+        public Dictionary<string, MealAttendanceDto> ShapeDailySummary(IEnumerable<TotalSummaryResult> meals, IEnumerable<GroupMask> masks)
         {
             var result = meals.ToDictionary(m => m.MealName, m => new MealAttendanceDto { Present = m.Total, Masked = false });
             foreach (var mask in masks)
             {
-                result[mask.MealName].Masked = mask.Attendance;
+                if (result.ContainsKey(mask.MealName))
+                {
+                    result[mask.MealName].Masked = mask.Attendance;
+                    continue;
+                }
+                else
+                {
+                    result.Add(mask.MealName, new MealAttendanceDto { Present = 0, Masked = mask.Attendance });
+                }
             }
-            return new DayAttendanceDto { Meals = result };
+            return result;
         }
         public Dictionary<string, int> ShapeMonthlySummary(IEnumerable<TotalSummaryResult> meals)
         {
             return meals.ToDictionary(a => a.MealName, a => a.Total);
         }
-        public IDictionary<string, GroupMealInfoDto> ShapeDailyInfo(IEnumerable<MealInfo> info, IEnumerable<GroupMask> masks)
+        public IEnumerable<GroupMealInfoDto> ShapeDailyInfo(IEnumerable<MealInfo> info, IEnumerable<GroupMask> masks)
         {
             return info
             .GroupBy(o => new { o.GroupName, o.GroupId })
-            .ToDictionary(child => child.Key.GroupName, child => new GroupMealInfoDto
+            .Select(group => new GroupMealInfoDto
             {
-                Children = child.GroupBy(m => new { m.ChildId, m.Name, m.Surname })
+                GroupName = group.Key.GroupName,
+                GroupId = group.Key.GroupId,
+                Children = group.GroupBy(m => new { m.ChildId, m.Name, m.Surname })
                 .Select(
                 m => new MealInfoDto
                 {
                     Name = m.Key.Name,
                     Surname = m.Key.Surname,
                     ChildId = m.Key.ChildId,
-                    GroupName = child.Key.GroupName,
-                    Summary = m.ToDictionary(a => a.MealName, a => a.Total)
+                    GroupName = group.Key.GroupName,
+                    Meals = m.ToDictionary(a => a.MealName, a => a.Total)
                 }),
-                Masks = masks.Where(m => m.GroupId == child.Key.GroupId)
+                Masks = masks.Where(m => m.GroupId == group.Key.GroupId)
                 .ToDictionary(m => m.MealName, m => m.Attendance)
             });
         }
@@ -89,7 +100,7 @@ namespace Rollcall.Services
                 Surname = child.Key.Surname,
                 ChildId = child.Key.ChildId,
                 GroupName = child.Key.GroupName,
-                Summary = child.ToDictionary(m => m.MealName, m => m.Total)
+                Meals = child.ToDictionary(m => m.MealName, m => m.Total)
             });
         }
     }

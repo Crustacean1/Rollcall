@@ -13,7 +13,35 @@ namespace Rollcall.Repositories
         {
             _context = context;
         }
-        public IEnumerable<ResultType> GetMeals<GroupingType, ResultType>(ISummarySpecification<GroupingType, ResultType> spec)
+        public IEnumerable<ResultType> GetMeals<GroupingType, ResultType>(IMealSpecification<GroupingType, ResultType> spec)
+         where GroupingType : class
+         where ResultType : class
+        {
+            return SelectMeals(spec);
+        }
+        public IEnumerable<MealInfo> GetMealSummary<GroupingType>(ISummarySpecification<GroupingType, MealInfo> spec) where GroupingType : class
+        {
+            var mealQuery = SelectMeals(spec);
+            var childrenWithMeals = _context.Set<Child>()
+            .Where(spec.SummaryCondition)
+            .Join(_context.Set<MealSchema>(), c => true, s => true, (child, schema) => new MealContext { Child = child, MealName = schema.Name });
+
+            return childrenWithMeals
+            .GroupJoin(mealQuery,
+            c => new { Id = c.Child.Id, MealName = c.MealName },
+            m => new { Id = m.ChildId, MealName = m.MealName }, (context, meal) => new { context, meal })
+            .SelectMany(g => g.meal.DefaultIfEmpty(), (g, m) => new MealInfo
+            {
+                Name = g.context.Child.Name,
+                Surname = g.context.Child.Surname,
+                ChildId = g.context.Child.Id,
+                GroupName = g.context.Child.MyGroup.Name,
+                GroupId = g.context.Child.GroupId,
+                MealName = g.context.MealName,
+                Total = (m.Total == null) ? 0 : m.Total
+            });
+        }
+        private IQueryable<ResultType> SelectMeals<GroupingType, ResultType>(IMealSpecification<GroupingType, ResultType> spec)
          where GroupingType : class
          where ResultType : class
         {
@@ -24,17 +52,7 @@ namespace Rollcall.Repositories
             var leftJoin = (spec.Masked ? GetMaskedMeals(query) : query)
             .Where(spec.Condition);
 
-            var extendedQuery = spec.Includes.Aggregate(leftJoin, (query, include) => query.Include(include));
-
             return leftJoin.GroupBy(spec.Grouping).Select(spec.Selection);
-        }
-        public IEnumerable<MealInfo> GetMealInfo<GroupingType>(ISummarySpecification<GroupingType, MealInfo> spec) where GroupingType : class
-        {
-            var query = _context.Set<ChildMeal>()
-            .AsNoTracking()
-            .Where(spec.Condition);
-            var extendedQuery = spec.Includes.Aggregate(query, (q, i) => q.Include(i));
-            return extendedQuery.GroupBy(spec.Grouping).Select(spec.Selection);
         }
         private IQueryable<ChildMeal> GetMaskedMeals(IQueryable<ChildMeal> query)
         {
@@ -51,5 +69,10 @@ namespace Rollcall.Repositories
                 .Where(a => a.Masked.Attendance != true)
                 .Select(a => a.Meal);
         }
+    }
+    public class MealContext
+    {
+        public Child Child { get; set; }
+        public string MealName { get; set; }
     }
 }

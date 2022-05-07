@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Rollcall.Specifications
 {
-    public class MonthlyAttendanceSpecification : ISummarySpecification<MonthlyMealGrouping, DailyMeal>
+    public class MonthlyAttendanceSpecification : IMealSpecification<MonthlyMealGrouping, DailyMeal>
     {
         public Expression<Func<ChildMeal, bool>> Condition { get; }
         public IEnumerable<string> Includes { get; }
