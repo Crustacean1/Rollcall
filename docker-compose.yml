@@ -14,7 +14,9 @@ services:
     stdin_open: true
     tty: true
   rollcalldb:
-    image: rollcalldb
+    build:
+      context: ./Db
+      dockerfile: Dockerfile
     ports:
       - 3306:3306
     volumes:

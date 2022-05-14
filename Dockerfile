@@ -4,7 +4,6 @@ RUN dotnet tool install -g dotnet-ef
 RUN apt-get update --yes && apt-get install zsh --yes
 ENV PATH $PATH:/root/.dotnet/tools
 ENTRYPOINT ["zsh"]
-#ENTRYPOINT ["dotnet","run"]
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS prod-build
 WORKDIR /Rollcall
