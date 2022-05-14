@@ -11,6 +11,7 @@ namespace Rollcall.Repositories
         }
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.UseCollation("utf8_general_ci");
             builder.Entity<Child>().HasKey(c => c.Id);
             builder.Entity<Group>().HasKey(g => g.Id);
             builder.Entity<MealSchema>().HasKey(s => s.Name);

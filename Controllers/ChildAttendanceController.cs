@@ -56,7 +56,7 @@ namespace Rollcall.Controllers
 
         [HttpPost, Authorize]
         [Route("{childId}/{year}/{month}/{day}")]
-        [ServiceFilter(typeof(FutureDateValidationFilter))]
+        [ServiceFilter(typeof(MealUpdateDateFilter))]
         [ServiceFilter(typeof(ChildExtractorFilter))]
         public async Task<ActionResult<IDictionary<string, bool>>> SetAttendance([FromBody] IDictionary<string, bool> update, int childId, int year, int month, int day)
         {

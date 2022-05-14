@@ -108,10 +108,14 @@ namespace Rollcall.Services
         public async Task<int> ExtendDefaultAttendance(int year, int month)
         {
             var defaultMealsToExtend = _mealRepo.GetMealsToExtend(year, month);
-            var mealsToCreate = defaultMealsToExtend.Join(Enumerable.Range(1, DateTime.DaysInMonth(year, month)), m => true, c => true,
+
+            var datesInMonth = Enumerable.Range(1, DateTime.DaysInMonth(year, month));
+            var daysInMonth = datesInMonth.Select(d => new DateTime(year, month, d));
+            var mealsToCreate = defaultMealsToExtend.Join(daysInMonth, m => true, c => (c.DayOfWeek != DayOfWeek.Sunday && c.DayOfWeek != DayOfWeek.Saturday),
+
             (m, d) => new ChildMeal
             {
-                Date = new DateTime(year, month, d),
+                Date = d,
                 ChildId = m.ChildId,
                 MealName = m.MealName,
                 Attendance = m.Attendance

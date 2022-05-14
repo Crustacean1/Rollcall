@@ -12,7 +12,7 @@ RUN dotnet restore
 COPY ./ ./
 RUN dotnet build -c Release -o ReleaseBuild
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS prod
 WORKDIR /Rollcall
 COPY --from=prod-build /Rollcall/ReleaseBuild .
 ENTRYPOINT ["dotnet","rollcall.dll"]

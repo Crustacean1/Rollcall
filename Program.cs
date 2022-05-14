@@ -63,7 +63,7 @@ class Program
         if (builder == null) { return; }
 
         builder.Services.AddScoped<DateValidationFilter>();
-        builder.Services.AddScoped<FutureDateValidationFilter>();
+        builder.Services.AddScoped<MealUpdateDateFilter>();
 
         builder.Services.AddScoped<ChildExtractorFilter>();
         builder.Services.AddScoped<GroupExtractorFilter>();

@@ -6,40 +6,35 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace rollcall.Migrations
 {
-    public partial class MealsOnWheels : Migration
+    public partial class PolishCollationv2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterDatabase()
-                .Annotation("MySql:CharSet", "utf8mb4");
-
             migrationBuilder.CreateTable(
                 name: "Groups",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    Name = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Groups", x => x.Id);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "MealSchemas",
                 columns: table => new
                 {
-                    Name = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    Name = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_MealSchemas", x => x.Name);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "Users",
@@ -47,18 +42,15 @@ namespace rollcall.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Login = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    PasswordSalt = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    PasswordHash = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    Login = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci"),
+                    PasswordSalt = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci"),
+                    PasswordHash = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "Children",
@@ -66,10 +58,8 @@ namespace rollcall.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Surname = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Name = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci"),
+                    Surname = table.Column<string>(type: "longtext", nullable: false, collation: "utf8_general_ci"),
                     GroupId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -82,15 +72,14 @@ namespace rollcall.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "GroupAttendance",
                 columns: table => new
                 {
                     GroupId = table.Column<int>(type: "int", nullable: false),
-                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8_general_ci"),
                     Date = table.Column<DateTime>(type: "date", nullable: false),
                     Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
@@ -110,15 +99,14 @@ namespace rollcall.Migrations
                         principalColumn: "Name",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "ChildAttendance",
                 columns: table => new
                 {
                     ChildId = table.Column<int>(type: "int", nullable: false),
-                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8_general_ci"),
                     Date = table.Column<DateTime>(type: "date", nullable: false),
                     Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
@@ -138,14 +126,13 @@ namespace rollcall.Migrations
                         principalColumn: "Name",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.CreateTable(
                 name: "DefaultAttendance",
                 columns: table => new
                 {
-                    MealName = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MealName = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8_general_ci"),
                     ChildId = table.Column<int>(type: "int", nullable: false),
                     Attendance = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
@@ -165,42 +152,22 @@ namespace rollcall.Migrations
                         principalColumn: "Name",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.InsertData(
-                table: "Groups",
-                columns: new[] { "Id", "Name" },
-                values: new object[] { 1, "AEII" });
+                .Annotation("Relational:Collation", "utf8_general_ci");
 
             migrationBuilder.InsertData(
                 table: "MealSchemas",
                 column: "Name",
-                values: new object[]
-                {
-                    "breakfast",
-                    "desert",
-                    "dinner"
-                });
+                value: "breakfast");
 
             migrationBuilder.InsertData(
-                table: "Children",
-                columns: new[] { "Id", "GroupId", "Name", "Surname" },
-                values: new object[] { 1, 1, "Kamil", "Kowalski" });
+                table: "MealSchemas",
+                column: "Name",
+                value: "desert");
 
             migrationBuilder.InsertData(
-                table: "DefaultAttendance",
-                columns: new[] { "ChildId", "MealName", "Attendance" },
-                values: new object[] { 1, "breakfast", true });
-
-            migrationBuilder.InsertData(
-                table: "DefaultAttendance",
-                columns: new[] { "ChildId", "MealName", "Attendance" },
-                values: new object[] { 1, "desert", false });
-
-            migrationBuilder.InsertData(
-                table: "DefaultAttendance",
-                columns: new[] { "ChildId", "MealName", "Attendance" },
-                values: new object[] { 1, "dinner", true });
+                table: "MealSchemas",
+                column: "Name",
+                value: "dinner");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChildAttendance_MealName",

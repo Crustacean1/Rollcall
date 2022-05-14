@@ -36,12 +36,14 @@ namespace Rollcall.Services
         }
         public void OnActionExecuted(ActionExecutedContext context) { }
     }
-    public class FutureDateValidationFilter : DateValidationFilterBase, IActionFilter
+    public class MealUpdateDateFilter : DateValidationFilterBase, IActionFilter
     {
         public void OnActionExecuting(ActionExecutingContext context)
         {
-            var date = parseContext(context);
-            if (date > DateTime.Now)
+            DateTime? date = parseContext(context);
+            var a = new DateTime();
+
+            if (date is null || date > DateTime.Now || ((DateTime)date).DayOfWeek == DayOfWeek.Sunday || ((DateTime)date).DayOfWeek == DayOfWeek.Saturday)
             {
                 context.Result = new BadRequestResult();
                 return;

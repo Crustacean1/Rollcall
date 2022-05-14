@@ -17,8 +17,6 @@ services:
     build:
       context: ./Db
       dockerfile: Dockerfile
-    ports:
-      - 3306:3306
     volumes:
       - rollcall_db_volume:/var/lib/mysql
 volumes:

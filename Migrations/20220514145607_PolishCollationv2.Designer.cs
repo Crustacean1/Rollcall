@@ -11,13 +11,14 @@ using Rollcall.Repositories;
 namespace rollcall.Migrations
 {
     [DbContext(typeof(RepositoryContext))]
-    [Migration("20220409154150_MealsOnWheels")]
-    partial class MealsOnWheels
+    [Migration("20220514145607_PolishCollationv2")]
+    partial class PolishCollationv2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .UseCollation("utf8_general_ci")
                 .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
@@ -43,18 +44,9 @@ namespace rollcall.Migrations
                     b.HasIndex("GroupId");
 
                     b.ToTable("Children");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            GroupId = 1,
-                            Name = "Kamil",
-                            Surname = "Kowalski"
-                        });
                 });
 
-            modelBuilder.Entity("Rollcall.Models.ChildAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.ChildMeal", b =>
                 {
                     b.Property<int>("ChildId")
                         .HasColumnType("int");
@@ -75,7 +67,7 @@ namespace rollcall.Migrations
                     b.ToTable("ChildAttendance");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.DefaultAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.DefaultMeal", b =>
                 {
                     b.Property<int>("ChildId")
                         .HasColumnType("int");
@@ -91,26 +83,6 @@ namespace rollcall.Migrations
                     b.HasIndex("MealName");
 
                     b.ToTable("DefaultAttendance");
-
-                    b.HasData(
-                        new
-                        {
-                            ChildId = 1,
-                            MealName = "breakfast",
-                            Attendance = true
-                        },
-                        new
-                        {
-                            ChildId = 1,
-                            MealName = "dinner",
-                            Attendance = true
-                        },
-                        new
-                        {
-                            ChildId = 1,
-                            MealName = "desert",
-                            Attendance = false
-                        });
                 });
 
             modelBuilder.Entity("Rollcall.Models.Group", b =>
@@ -126,16 +98,9 @@ namespace rollcall.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Groups");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "AEII"
-                        });
                 });
 
-            modelBuilder.Entity("Rollcall.Models.GroupAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.GroupMask", b =>
                 {
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
@@ -214,10 +179,10 @@ namespace rollcall.Migrations
                     b.Navigation("MyGroup");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.ChildAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.ChildMeal", b =>
                 {
                     b.HasOne("Rollcall.Models.Child", "TargetChild")
-                        .WithMany()
+                        .WithMany("DailyMeals")
                         .HasForeignKey("ChildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -233,7 +198,7 @@ namespace rollcall.Migrations
                     b.Navigation("TargetChild");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.DefaultAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.DefaultMeal", b =>
                 {
                     b.HasOne("Rollcall.Models.Child", "TargetChild")
                         .WithMany("DefaultMeals")
@@ -252,7 +217,7 @@ namespace rollcall.Migrations
                     b.Navigation("TargetChild");
                 });
 
-            modelBuilder.Entity("Rollcall.Models.GroupAttendance", b =>
+            modelBuilder.Entity("Rollcall.Models.GroupMask", b =>
                 {
                     b.HasOne("Rollcall.Models.Group", "TargetGroup")
                         .WithMany("Masks")
@@ -273,6 +238,8 @@ namespace rollcall.Migrations
 
             modelBuilder.Entity("Rollcall.Models.Child", b =>
                 {
+                    b.Navigation("DailyMeals");
+
                     b.Navigation("DefaultMeals");
                 });
 
